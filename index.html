@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valorant Randomizer</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background-color: #0f1923; /* Valo Dark Blue */
+            color: #ece8e1; /* Valo White */
+            font-family: sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+        h2 { color: #ff4655; /* Valo Red */ }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input {
+            background: #1f2731;
+            border: 1px solid #ff4655;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .btn {
+            background: #ff4655;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            text-transform: uppercase;
+        }
+
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1f2731;
+            border-radius: 8px;
+            display: none; /* Скрыто по умолчанию */
+            text-align: left;
+        }
+
+        .team-header { color: #ff4655; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>VALORANT LOBBY</h2>
+
+    <div class="container" id="inputs">
+        <input type="text" placeholder="Игрок 1" value="Я">
+        <input type="text" placeholder="Игрок 2">
+        <input type="text" placeholder="Игрок 3">
+        <input type="text" placeholder="Игрок 4">
+        <input type="text" placeholder="Игрок 5">
+        <input type="text" placeholder="Игрок 6">
+        <input type="text" placeholder="Игрок 7">
+        <input type="text" placeholder="Игрок 8">
+    </div>
+
+    <div style="margin-top: 15px; text-align: left;">
+        <label><input type="checkbox" id="no-pearl"> Бан Pearl</label><br>
+        <label><input type="checkbox" id="no-breeze"> Бан Breeze</label>
+    </div>
+
+    <button class="btn" onclick="randomize()">LOCK IN (GENERATE)</button>
+
+    <div class="result-box" id="result">
+        <h3 id="map-name">Карта: ???</h3>
+        <div class="team-header">Атака (Team A) - Капитан: <span id="cap-a"></span></div>
+        <div id="team-a-list"></div>
+
+        <div class="team-header">Защита (Team B) - Капитан: <span id="cap-b"></span></div>
+        <div id="team-b-list"></div>
+    </div>
+
+    <script>
+        // Инициализация Telegram WebApp
+        let tg = window.Telegram.WebApp;
+        tg.expand(); // Раскрыть на весь экран
+
+        const maps = ["Ascent", "Bind", "Haven", "Split", "Icebox", "Breeze", "Fracture", "Pearl", "Lotus", "Sunset", "Abyss"];
+
+        function randomize() {
+            // 1. Собираем имена
+            let inputs = document.querySelectorAll('#inputs input');
+            let players = [];
+            inputs.forEach(input => {
+                if(input.value.trim() !== "") players.push(input.value.trim());
+            });
+
+            if (players.length < 2) {
+                tg.showAlert("Нужно хотя бы 2 игрока!");
+                return;
+            }
+
+            // 2. Шаффл игроков (Алгоритм Фишера-Йейтса)
+            for (let i = players.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [players[i], players[j]] = [players[j], players[i]];
+            }
+
+            // 3. Делим на команды
+            let mid = Math.ceil(players.length / 2);
+            let teamA = players.slice(0, mid);
+            let teamB = players.slice(mid);
+
+            // 4. Выбираем карту
+            let availableMaps = [...maps];
+            if(document.getElementById('no-pearl').checked) availableMaps = availableMaps.filter(m => m !== "Pearl");
+            if(document.getElementById('no-breeze').checked) availableMaps = availableMaps.filter(m => m !== "Breeze");
+
+            let randomMap = availableMaps[Math.floor(Math.random() * availableMaps.length)];
+
+            // 5. Вывод результатов
+            document.getElementById('map-name').innerText = "Карта: " + randomMap;
+
+            document.getElementById('cap-a').innerText = teamA[0]; // Первый в списке - капитан
+            document.getElementById('team-a-list').innerText = teamA.slice(1).join(", ");
+
+            document.getElementById('cap-b').innerText = teamB[0]; // Первый в списке - капитан
+            document.getElementById('team-b-list').innerText = teamB.slice(1).join(", ");
+
+            document.getElementById('result').style.display = "block";
+
+            // Вибрация телефона для эффекта
+            tg.HapticFeedback.impactOccurred('heavy');
+        }
+    </script>
+</body>
+</html>
