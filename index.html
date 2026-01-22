@@ -2,141 +2,251 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Valorant Randomizer</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            background-color: #0f1923; /* Valo Dark Blue */
-            color: #ece8e1; /* Valo White */
-            font-family: sans-serif;
+            background-color: #0f1923;
+            color: #ece8e1;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
             padding: 20px;
-            text-align: center;
-        }
-        h2 { color: #ff4655; /* Valo Red */ }
-
-        .container {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            align-items: center;
+            overflow-x: hidden;
+        }
+        
+        h2 { color: #ff4655; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* Контейнер для колеса */
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 20px 0;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg); /* Чтобы старт был сверху */
+            transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1); /* Магия плавного торможения */
+        }
+        /* Стрелка указатель */
+        .arrow {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; 
+            height: 0; 
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 25px solid #ece8e1;
+            z-index: 10;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+            max-width: 400px;
         }
 
         input {
             background: #1f2731;
-            border: 1px solid #ff4655;
+            border: 1px solid #535c68;
             color: white;
             padding: 10px;
-            border-radius: 5px;
+            border-radius: 4px;
             outline: none;
+            width: 90%;
         }
+        input:focus { border-color: #ff4655; }
 
         .btn {
-            background: #ff4655;
+            background: linear-gradient(45deg, #ff4655, #d63c4b);
             color: white;
             border: none;
-            padding: 15px;
+            padding: 15px 40px;
             font-size: 18px;
             font-weight: bold;
-            border-radius: 5px;
+            border-radius: 2px;
             cursor: pointer;
             margin-top: 20px;
             text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(255, 70, 85, 0.4);
+            transition: transform 0.1s;
         }
+        .btn:active { transform: scale(0.95); }
 
         .result-box {
             margin-top: 20px;
-            padding: 15px;
+            padding: 20px;
             background: #1f2731;
-            border-radius: 8px;
-            display: none; /* Скрыто по умолчанию */
+            border-left: 5px solid #ff4655;
+            width: 90%;
+            max-width: 400px;
+            display: none;
             text-align: left;
+            animation: slideIn 0.5s ease;
         }
 
-        .team-header { color: #ff4655; font-weight: bold; margin-top: 10px; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .team-title { color: #ff4655; font-weight: 800; font-size: 1.1em; margin-top: 10px; }
+        .map-name { font-size: 1.5em; font-weight: bold; color: #ece8e1; border-bottom: 1px solid #535c68; padding-bottom: 10px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <h2>VALORANT LOBBY</h2>
+    <h2>Lobby Roulette</h2>
 
-    <div class="container" id="inputs">
+    <div class="wheel-container">
+        <div class="arrow"></div>
+        <canvas id="wheelCanvas" width="500" height="500"></canvas>
+    </div>
+
+    <div class="input-grid" id="inputs">
         <input type="text" placeholder="Игрок 1" value="Я">
-        <input type="text" placeholder="Игрок 2">
-        <input type="text" placeholder="Игрок 3">
-        <input type="text" placeholder="Игрок 4">
-        <input type="text" placeholder="Игрок 5">
-        <input type="text" placeholder="Игрок 6">
-        <input type="text" placeholder="Игрок 7">
-        <input type="text" placeholder="Игрок 8">
+        <input type="text" placeholder="Игрок 2" value="Sova">
+        <input type="text" placeholder="Игрок 3" value="Jett">
+        <input type="text" placeholder="Игрок 4" value="Sage">
+        <input type="text" placeholder="Игрок 5" value="Omen">
+        <input type="text" placeholder="Игрок 6" value="Reyna">
+        <input type="text" placeholder="Игрок 7" value="Brim">
+        <input type="text" placeholder="Игрок 8" value="Viper">
     </div>
 
-    <div style="margin-top: 15px; text-align: left;">
-        <label><input type="checkbox" id="no-pearl"> Бан Pearl</label><br>
-        <label><input type="checkbox" id="no-breeze"> Бан Breeze</label>
-    </div>
-
-    <button class="btn" onclick="randomize()">LOCK IN (GENERATE)</button>
+    <button class="btn" onclick="spinWheel()">SPIN THE WHEEL</button>
 
     <div class="result-box" id="result">
-        <h3 id="map-name">Карта: ???</h3>
-        <div class="team-header">Атака (Team A) - Капитан: <span id="cap-a"></span></div>
-        <div id="team-a-list"></div>
+        <div class="map-name" id="map-display">MAP: ???</div>
+        
+        <div class="team-title">ATTACK (Captain)</div>
+        <div id="team-a"></div>
 
-        <div class="team-header">Защита (Team B) - Капитан: <span id="cap-b"></span></div>
-        <div id="team-b-list"></div>
+        <div class="team-title">DEFENSE</div>
+        <div id="team-b"></div>
     </div>
 
     <script>
-        // Инициализация Telegram WebApp
-        let tg = window.Telegram.WebApp;
-        tg.expand(); // Раскрыть на весь экран
-
+        const canvas = document.getElementById("wheelCanvas");
+        const ctx = canvas.getContext("2d");
+        const colors = ["#ff4655", "#0f1923", "#535c68", "#2c3e50", "#c0392b", "#8e44ad", "#2980b9", "#16a085"];
         const maps = ["Ascent", "Bind", "Haven", "Split", "Icebox", "Breeze", "Fracture", "Pearl", "Lotus", "Sunset", "Abyss"];
+        
+        let currentRotation = 0;
+        let players = [];
 
-        function randomize() {
-            // 1. Собираем имена
-            let inputs = document.querySelectorAll('#inputs input');
-            let players = [];
-            inputs.forEach(input => {
-                if(input.value.trim() !== "") players.push(input.value.trim());
+        // Функция отрисовки колеса
+        function drawWheel(names) {
+            if (names.length === 0) return;
+            const arc = (2 * Math.PI) / names.length;
+            const radius = canvas.width / 2;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            names.forEach((name, i) => {
+                const angle = i * arc;
+                ctx.beginPath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(radius, radius);
+                ctx.arc(radius, radius, radius, angle, angle + arc);
+                ctx.fill();
+                ctx.stroke();
+
+                // Текст
+                ctx.save();
+                ctx.translate(radius, radius);
+                ctx.rotate(angle + arc / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 30px Arial";
+                ctx.fillText(name, radius - 20, 10);
+                ctx.restore();
             });
+        }
 
+        // Инициализация при старте
+        function getNames() {
+            let inputs = document.querySelectorAll('#inputs input');
+            let list = [];
+            inputs.forEach(inp => { if(inp.value.trim()) list.push(inp.value.trim()) });
+            return list;
+        }
+
+        // Рендерим колесо сразу, чтобы было красиво
+        drawWheel(getNames());
+        
+        // Обновляем колесо при вводе букв
+        document.querySelectorAll('#inputs input').forEach(input => {
+            input.addEventListener('input', () => drawWheel(getNames()));
+        });
+
+        function spinWheel() {
+            players = getNames();
             if (players.length < 2) {
-                tg.showAlert("Нужно хотя бы 2 игрока!");
+                alert("Нужно минимум 2 игрока!");
                 return;
             }
 
-            // 2. Шаффл игроков (Алгоритм Фишера-Йейтса)
-            for (let i = players.length - 1; i > 0; i--) {
+            // 1. Вычисляем случайный угол остановки
+            // Добавляем минимум 5 полных оборотов (360 * 5) + случайный сектор
+            const randomDegree = Math.floor(3000 + Math.random() * 360); 
+            currentRotation += randomDegree;
+
+            // 2. Крутим CSS-ом
+            canvas.style.transform = `rotate(-${currentRotation}deg)`;
+
+            // 3. Ждем окончания анимации (4 секунды как в CSS transition)
+            setTimeout(() => {
+                calculateResults(currentRotation);
+            }, 4000);
+        }
+
+        function calculateResults(totalRotation) {
+            // Математика: вычисляем на каком секторе остановилась стрелка
+            // Нормализуем угол (остаток от деления на 360)
+            const actualRotation = totalRotation % 360;
+            const arcSize = 360 / players.length;
+            
+            // Стрелка сверху (0 градусов), но колесо крутится назад.
+            // Индекс победителя = (угол / размер сектора)
+            // Важно: так как CSS rotate отрицательный, мы считаем "пройденный путь"
+            const winnerIndex = Math.floor((360 - (actualRotation % 360)) / arcSize) % players.length;
+            
+            const captainA = players[winnerIndex];
+            
+            // Формируем команды
+            let pool = players.filter(p => p !== captainA);
+            
+            // Шаффл остальных
+            for (let i = pool.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [players[i], players[j]] = [players[j], players[i]];
+                [pool[i], pool[j]] = [pool[j], pool[i]];
             }
 
-            // 3. Делим на команды
-            let mid = Math.ceil(players.length / 2);
-            let teamA = players.slice(0, mid);
-            let teamB = players.slice(mid);
+            let teamA = [captainA, ...pool.slice(0, Math.ceil(pool.length/2) - 1)];
+            let teamB = pool.slice(Math.ceil(pool.length/2) - 1);
+            let randomMap = maps[Math.floor(Math.random() * maps.length)];
 
-            // 4. Выбираем карту
-            let availableMaps = [...maps];
-            if(document.getElementById('no-pearl').checked) availableMaps = availableMaps.filter(m => m !== "Pearl");
-            if(document.getElementById('no-breeze').checked) availableMaps = availableMaps.filter(m => m !== "Breeze");
-
-            let randomMap = availableMaps[Math.floor(Math.random() * availableMaps.length)];
-
-            // 5. Вывод результатов
-            document.getElementById('map-name').innerText = "Карта: " + randomMap;
-
-            document.getElementById('cap-a').innerText = teamA[0]; // Первый в списке - капитан
-            document.getElementById('team-a-list').innerText = teamA.slice(1).join(", ");
-
-            document.getElementById('cap-b').innerText = teamB[0]; // Первый в списке - капитан
-            document.getElementById('team-b-list').innerText = teamB.slice(1).join(", ");
-
+            // Показываем результат
+            document.getElementById('map-display').innerText = "MAP: " + randomMap.toUpperCase();
+            document.getElementById('team-a').innerText = teamA.join(", ");
+            document.getElementById('team-b').innerText = teamB.join(", ");
+            
             document.getElementById('result').style.display = "block";
-
-            // Вибрация телефона для эффекта
-            tg.HapticFeedback.impactOccurred('heavy');
+            
+            // Вибрация
+            if(window.Telegram.WebApp.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            }
         }
     </script>
 </body>
