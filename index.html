@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f1923">
     <title>Valorant Lobby Manager</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
             background-color: #0f1923;
             color: #ece8e1;
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
-            padding: 10px;
+            padding: 20px 10px; /* Чуть больше отступ сверху */
             display: flex;
             flex-direction: column;
             align-items: center;
             overflow-x: hidden;
+            min-height: 100vh;
         }
 
-        h2, h3 { color: #ff4655; text-transform: uppercase; margin: 10px 0; letter-spacing: 1px; }
+        h2, h3 { color: #ff4655; text-transform: uppercase; margin: 10px 0; letter-spacing: 1px; text-align: center; }
         
         /* КОЛЕСО */
         .wheel-container {
@@ -26,6 +27,7 @@
             width: 280px;
             height: 280px;
             margin: 10px 0;
+            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
         }
         canvas {
             width: 100%;
@@ -35,13 +37,14 @@
         }
         .arrow {
             position: absolute;
-            top: -10px; left: 50%;
+            top: -15px; left: 50%;
             transform: translateX(-50%);
             width: 0; height: 0;
             border-left: 15px solid transparent;
             border-right: 15px solid transparent;
-            border-top: 25px solid #ece8e1;
+            border-top: 30px solid #ece8e1;
             z-index: 10;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
         }
 
         /* СЕТКА ИГРОКОВ */
@@ -54,34 +57,34 @@
             margin-bottom: 15px;
         }
         
-        .player-checkbox {
-            display: none; /* Скрываем стандартный чекбокс */
-        }
+        .player-checkbox { display: none; }
         
         .player-label {
             background: #1f2731;
             border: 1px solid #535c68;
-            padding: 10px 5px;
+            padding: 12px 5px;
             text-align: center;
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
             transition: all 0.2s;
             user-select: none;
+            /* Защита от случайного дабл-клика для зума на айфонах */
+            touch-action: manipulation; 
         }
         
-        /* Стиль когда игрок выбран */
         .player-checkbox:checked + .player-label {
             background: #ff4655;
             color: white;
             border-color: #ff4655;
             font-weight: bold;
-            box-shadow: 0 0 10px rgba(255, 70, 85, 0.4);
+            box-shadow: 0 0 15px rgba(255, 70, 85, 0.3);
+            transform: translateY(-2px);
         }
 
-        .counter { color: #8b9bb4; font-size: 14px; margin-bottom: 5px; }
+        .counter { color: #8b9bb4; font-size: 14px; margin-bottom: 10px; }
 
-        /* КНОПКИ УПРАВЛЕНИЯ */
+        /* КНОПКИ */
         .btn {
             background: linear-gradient(45deg, #ff4655, #d63c4b);
             color: white; border: none;
@@ -90,31 +93,46 @@
             border-radius: 4px; cursor: pointer;
             text-transform: uppercase;
             margin-top: 10px;
+            box-shadow: 0 4px 0 #9e1c28; /* Эффект 3D кнопки */
+            transition: transform 0.1s, box-shadow 0.1s;
         }
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #9e1c28;
+        }
+
         .btn-outline {
             background: transparent;
             border: 1px solid #535c68;
             padding: 8px;
             font-size: 12px;
             margin-top: 5px;
+            box-shadow: none;
         }
 
         /* КАРТЫ */
         .maps-container {
-            width: 100%; max-width: 400px;
+            width: 100%; max-width: 380px; /* Чуть уже чтобы не прилипало */
             background: #1f2731;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 30px;
+            border: 1px solid #535c68;
         }
         .maps-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 5px;
+            gap: 8px;
             margin-top: 10px;
             text-align: left;
         }
-        .map-label { display: block; font-size: 14px; }
+        .map-label { 
+            display: flex; 
+            align-items: center; 
+            font-size: 14px; 
+            cursor: pointer;
+        }
+        .map-label input { margin-right: 10px; accent-color: #ff4655; }
 
         /* РЕЗУЛЬТАТЫ */
         .result-box {
@@ -124,9 +142,10 @@
             border-left: 5px solid #ff4655;
             width: 90%; max-width: 400px;
             display: none; text-align: left;
+            margin-bottom: 50px;
         }
-        .team-header { color: #ff4655; font-weight: bold; margin-top: 10px; border-bottom: 1px solid #535c68; }
-        .map-display { font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 15px; color: #ece8e1; }
+        .team-header { color: #ff4655; font-weight: bold; margin-top: 15px; border-bottom: 1px solid #535c68; padding-bottom: 5px; }
+        .map-display { font-size: 28px; font-weight: bold; text-align: center; margin-bottom: 15px; color: #ece8e1; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
     </style>
 </head>
@@ -141,12 +160,12 @@
 
     <div class="roster-grid" id="rosterArea"></div>
 
-    <button class="btn" onclick="spinWheel()">Start Game</button>
+    <button class="btn" onclick="spinWheel()">LOCK IN & START</button>
 
     <div class="maps-container">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3>Map Pool</h3>
-            <button class="btn btn-outline" onclick="toggleMaps()">Select/Deselect All</button>
+            <h3 style="margin:0; font-size: 16px;">Map Pool</h3>
+            <button class="btn btn-outline" style="width: auto; margin:0;" onclick="toggleMaps()">All / None</button>
         </div>
         <div class="maps-grid" id="mapsArea"></div>
     </div>
@@ -166,14 +185,12 @@
         const ctx = canvas.getContext("2d");
         
         // --- ДАННЫЕ ---
-        // Твои друзья
         const friends = [
             "Влад", "Никита", "Диана", 
             "Василиса", "Вова", "Богдан", 
             "Артем Донбасс", "Артём рыбак", "Ivy"
         ];
         
-        // Карты Валорант
         const allMaps = [
             "Ascent", "Bind", "Haven", "Split", 
             "Icebox", "Breeze", "Fracture", "Pearl", 
@@ -185,21 +202,19 @@
 
         // --- ИНИЦИАЛИЗАЦИЯ ---
         function init() {
-            // 1. Создаем кнопки друзей
+            // 1. Кнопки друзей
             const rosterDiv = document.getElementById("rosterArea");
             friends.forEach((name, index) => {
                 const id = `p_${index}`;
-                // Создаем чекбокс (скрытый) + лейбл (кнопка)
                 rosterDiv.innerHTML += `
                     <input type="checkbox" class="player-checkbox" id="${id}" value="${name}" onchange="updateUI()">
                     <label class="player-label" for="${id}">${name}</label>
                 `;
             });
 
-            // 2. Создаем чекбоксы карт
+            // 2. Чекбоксы карт
             const mapsDiv = document.getElementById("mapsArea");
             allMaps.forEach((map, index) => {
-                const id = `m_${index}`;
                 mapsDiv.innerHTML += `
                     <label class="map-label">
                         <input type="checkbox" class="map-checkbox" value="${map}" checked> ${map}
@@ -207,36 +222,29 @@
                 `;
             });
 
-            drawWheel([]); // Рисуем пустое
+            drawWheel([]); 
         }
 
         // --- ЛОГИКА ---
         function getSelectedPlayers() {
-            const checkboxes = document.querySelectorAll('.player-checkbox:checked');
-            return Array.from(checkboxes).map(cb => cb.value);
+            return Array.from(document.querySelectorAll('.player-checkbox:checked')).map(cb => cb.value);
         }
 
         function getSelectedMaps() {
-            const checkboxes = document.querySelectorAll('.map-checkbox:checked');
-            return Array.from(checkboxes).map(cb => cb.value);
+            return Array.from(document.querySelectorAll('.map-checkbox:checked')).map(cb => cb.value);
         }
 
         function updateUI() {
             const selected = getSelectedPlayers();
-            
-            // Обновляем текст счетчика
             const count = selected.length;
             let modeText = "(Недостаточно)";
-            if (count >= 2) modeText = `(Режим ${Math.floor(count/2)} на ${Math.ceil(count/2)})`;
+            if (count >= 2) modeText = `(${Math.floor(count/2)} vs ${Math.ceil(count/2)})`;
             document.getElementById("playerCounter").innerText = `Выбрано: ${count} ${modeText}`;
-
-            // Перерисовываем колесо
             drawWheel(selected);
         }
 
         function toggleMaps() {
             const checkboxes = document.querySelectorAll('.map-checkbox');
-            // Если первая выключена - включаем все, иначе выключаем все
             const newState = !checkboxes[0].checked;
             checkboxes.forEach(cb => cb.checked = newState);
         }
@@ -245,7 +253,6 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             if (names.length === 0) {
-                // Если никто не выбран, рисуем серый круг
                 ctx.beginPath();
                 ctx.arc(250, 250, 250, 0, 2 * Math.PI);
                 ctx.fillStyle = "#1f2731";
@@ -253,7 +260,7 @@
                 ctx.fillStyle = "#fff";
                 ctx.textAlign = "center";
                 ctx.font = "30px Arial";
-                ctx.fillText("ВЫБЕРИ ИГРОКОВ", 250, 250);
+                ctx.fillText("ВЫБЕРИТЕ ЛЮДЕЙ", 250, 250);
                 return;
             }
 
@@ -274,7 +281,7 @@
                 ctx.rotate(angle + arc / 2);
                 ctx.textAlign = "right";
                 ctx.fillStyle = "#fff";
-                ctx.font = "bold 24px Arial"; // Чуть меньше шрифт чтобы влезли длинные имена
+                ctx.font = "bold 24px Arial";
                 ctx.fillText(name, radius - 20, 10);
                 ctx.restore();
             });
@@ -285,7 +292,7 @@
             const activeMaps = getSelectedMaps();
 
             if (players.length < 2) {
-                alert("Выберите хотя бы 2 друзей!");
+                alert("Нужно хотя бы 2 человека!");
                 return;
             }
             if (activeMaps.length === 0) {
@@ -293,58 +300,41 @@
                 return;
             }
 
-            // Анимация вращения
+            // Прячем старый результат если был
+            document.getElementById("result").style.display = "none";
+
             const randomDegree = Math.floor(3000 + Math.random() * 360); 
             currentRotation += randomDegree;
             canvas.style.transform = `rotate(-${currentRotation}deg)`;
 
-            // Вибрация (Haptic)
-            if(window.Telegram.WebApp.HapticFeedback) {
-                window.Telegram.WebApp.HapticFeedback.selectionChanged();
-            }
-
-            // Ждем 4 секунды
             setTimeout(() => {
                 showResults(players, activeMaps);
             }, 4000);
         }
 
         function showResults(players, activeMaps) {
-            // 1. Шаффл игроков
+            // Fisher-Yates shuffle
             for (let i = players.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [players[i], players[j]] = [players[j], players[i]];
             }
 
-            // 2. Делим на команды (ровно пополам)
             const mid = Math.ceil(players.length / 2);
             const teamA = players.slice(0, mid);
             const teamB = players.slice(mid);
-
-            // 3. Выбираем карту
             const randomMap = activeMaps[Math.floor(Math.random() * activeMaps.length)];
 
-            // 4. Вывод
-            document.getElementById("resMap").innerText = "MAP: " + randomMap.toUpperCase();
-            
-            // Капитаны (первые в списке) выделены жирным
+            document.getElementById("resMap").innerText = randomMap.toUpperCase();
             document.getElementById("resTeamA").innerHTML = `<b>👑 ${teamA[0]}</b><br>` + teamA.slice(1).join("<br>");
             document.getElementById("resTeamB").innerHTML = `<b>👑 ${teamB[0]}</b><br>` + teamB.slice(1).join("<br>");
 
-            document.getElementById("result").style.display = "block";
-            document.getElementById("result").scrollIntoView({behavior: "smooth"});
-            
-            if(window.Telegram.WebApp.HapticFeedback) {
-                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-            }
+            const resDiv = document.getElementById("result");
+            resDiv.style.display = "block";
+            // Плавный скролл к результату
+            resDiv.scrollIntoView({behavior: "smooth", block: "center"});
         }
 
-        // Запуск при старте
         init();
-        
-        // Сообщаем Телеграму что мы готовы
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand();
     </script>
 </body>
 </html>
