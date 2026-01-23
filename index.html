@@ -4,13 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f1923">
-    <title>Valorant Manager 2026</title>
+    <title>VALORANT PROTOCOL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #0f1923;
             --text: #ece8e1;
             --red: #ff4655;
-            --dark-panel: #1f2731;
+            --red-dim: #bd3944;
+            --dark-panel: rgba(31, 39, 49, 0.9);
             --border: #535c68;
             --duelist: #f39c12; 
             --controller: #8e44ad;
@@ -20,8 +22,15 @@
 
         body {
             background-color: var(--bg);
+            /* Геометрический фон CSS */
+            background-image: 
+                linear-gradient(45deg, #16202a 25%, transparent 25%, transparent 75%, #16202a 75%, #16202a),
+                linear-gradient(45deg, #16202a 25%, transparent 25%, transparent 75%, #16202a 75%, #16202a);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            
             color: var(--text);
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Oswald', sans-serif; /* Новый шрифт */
             margin: 0;
             padding: 20px 10px;
             display: flex;
@@ -31,93 +40,184 @@
             min-height: 100vh;
         }
 
-        h2 { color: var(--red); text-transform: uppercase; margin: 0 0 15px 0; letter-spacing: 2px; }
+        h2 { 
+            color: var(--red); 
+            text-transform: uppercase; 
+            margin: 0 0 20px 0; 
+            font-size: 32px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 70, 85, 0.3);
+        }
         
+        /* --- UI COMPONENTS --- */
+        
+        /* Общий стиль для рамок (Срезанные углы) */
+        .valo-box {
+            background: var(--dark-panel);
+            border: 1px solid var(--border);
+            /* Магия Valorant форм: */
+            clip-path: polygon(
+                10px 0, 100% 0, 
+                100% calc(100% - 10px), calc(100% - 10px) 100%, 
+                0 100%, 0 10px
+            );
+            backdrop-filter: blur(5px);
+        }
+
         /* ПСИХУШКА MODE */
         .mode-switch-container {
             display: flex; align-items: center; margin-bottom: 20px;
-            background: var(--dark-panel); padding: 8px 15px; border-radius: 50px;
-            border: 1px solid var(--border);
+            background: rgba(0,0,0,0.4); 
+            padding: 10px 20px; 
+            border: 1px solid var(--red);
+            clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%); /* Трапеция */
         }
-        .switch-label { font-weight: bold; font-size: 14px; margin-left: 10px; text-transform: uppercase;}
-        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch-label { font-weight: bold; font-size: 16px; margin-left: 15px; text-transform: uppercase; letter-spacing: 1px;}
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border); transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .3s; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .3s; }
         input:checked + .slider { background-color: var(--red); }
         input:checked + .slider:before { transform: translateX(20px); }
 
         /* КОЛЕСО */
-        .wheel-container { position: relative; width: 260px; height: 260px; margin: 10px 0; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
+        .wheel-container { 
+            position: relative; width: 280px; height: 280px; margin: 10px 0; 
+            filter: drop-shadow(0 0 15px rgba(255, 70, 85, 0.2));
+        }
         canvas { width: 100%; height: 100%; transform: rotate(-90deg); transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1); }
-        .arrow { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid #ece8e1; z-index: 10; }
+        /* Треугольник сверху */
+        .arrow { 
+            position: absolute; top: -18px; left: 50%; transform: translateX(-50%); 
+            width: 0; height: 0; 
+            border-left: 15px solid transparent; 
+            border-right: 15px solid transparent; 
+            border-top: 30px solid var(--red); /* Красная стрелка */
+            z-index: 10; 
+            filter: drop-shadow(0 2px 5px #000);
+        }
 
         /* СПИСОК ИГРОКОВ */
-        .roster-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; max-width: 400px; margin-bottom: 10px; }
+        .roster-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; max-width: 400px; margin-bottom: 10px; }
         .player-checkbox { display: none; }
-        .player-label {
-            background: var(--dark-panel); border: 1px solid var(--border); padding: 10px 2px;
-            text-align: center; border-radius: 4px; cursor: pointer; font-size: 13px;
-            transition: 0.2s; user-select: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .player-checkbox:checked + .player-label { background: var(--red); color: white; border-color: var(--red); font-weight: bold; }
-        .add-btn { background: #16a085; color: white; border: 1px dashed #fff; font-size: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer; border-radius: 4px; }
-
-        /* MAIN BUTTONS */
-        .btn {
-            background: linear-gradient(45deg, var(--red), #d63c4b); color: white; border: none;
-            padding: 15px 0; width: 100%; max-width: 400px; font-size: 18px; font-weight: bold;
-            border-radius: 4px; cursor: pointer; text-transform: uppercase; margin-top: 10px;
-            box-shadow: 0 4px 0 #9e1c28; transition: transform 0.1s, box-shadow 0.1s;
-        }
-        .btn:active { transform: translateY(4px); box-shadow: none; }
         
+        .player-label {
+            background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            padding: 12px 2px;
+            text-align: center; cursor: pointer; font-size: 14px; letter-spacing: 0.5px;
+            transition: 0.2s; user-select: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            /* Срезаем один угол */
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+        }
+        .player-checkbox:checked + .player-label { 
+            background: var(--red); 
+            color: white; 
+            border-color: var(--red); 
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            transform: translateY(-2px);
+        }
+        
+        .add-btn { 
+            background: rgba(22, 160, 133, 0.2); border: 1px solid #16a085; color: #16a085; 
+            font-size: 24px; display: flex; justify-content: center; align-items: center; cursor: pointer;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+        }
+
+        /* ГЛАВНАЯ КНОПКА START */
+        .btn {
+            background: var(--red);
+            color: white; border: none;
+            padding: 20px 0; width: 100%; max-width: 400px;
+            font-size: 22px; font-weight: bold; font-family: 'Oswald', sans-serif; letter-spacing: 2px;
+            cursor: pointer; text-transform: uppercase; margin-top: 15px;
+            /* Форма кнопки "LOCK IN" из игры */
+            clip-path: polygon(
+                15px 0, 100% 0, 
+                100% calc(100% - 15px), calc(100% - 15px) 100%, 
+                0 100%, 0 15px
+            );
+            transition: 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:hover { background: #ff5864; }
+        .btn:active { transform: scale(0.98); background: var(--red-dim); }
+
+        /* Кнопка настроек */
         .btn-settings {
             background: transparent; border: 1px solid var(--border); color: #8b9bb4;
-            padding: 10px; width: 100%; max-width: 400px; margin-top: 20px; cursor: pointer;
-            text-transform: uppercase; font-size: 12px; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center;
+            padding: 12px; width: 100%; max-width: 400px; margin-top: 25px; cursor: pointer;
+            text-transform: uppercase; font-size: 14px; letter-spacing: 2px; 
+            display: flex; justify-content: space-between; align-items: center;
+            font-family: 'Oswald', sans-serif;
         }
+        .btn-settings:hover { border-color: var(--red); color: var(--text); }
 
-        /* --- ADVANCED SETTINGS PANEL --- */
+        /* ПАНЕЛЬ НАСТРОЕК */
         .settings-panel {
-            display: none; width: 90%; max-width: 380px; background: #182029;
-            border: 1px solid var(--border); border-top: none; padding: 15px;
+            display: none; width: 100%; max-width: 400px; 
+            background: rgba(15, 25, 35, 0.95);
+            border: 1px solid var(--border); border-top: none; padding: 20px;
             box-sizing: border-box; animation: slideDown 0.3s ease;
+            margin-bottom: 20px;
         }
         @keyframes slideDown { from {opacity: 0; transform: translateY(-10px);} to {opacity: 1; transform: translateY(0);} }
 
-        .section-title { color: #8b9bb4; font-size: 12px; text-transform: uppercase; margin-top: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px; }
+        .section-title { 
+            color: #fff; font-size: 14px; text-transform: uppercase; 
+            margin-top: 20px; border-bottom: 2px solid var(--red); 
+            padding-bottom: 5px; margin-bottom: 15px; display: inline-block;
+        }
         
-        select { width: 100%; padding: 10px; background: var(--dark-panel); color: white; border: 1px solid var(--border); border-radius: 4px; outline: none; }
+        select { 
+            width: 100%; padding: 12px; background: rgba(0,0,0,0.3); color: white; 
+            border: 1px solid var(--border); outline: none; font-family: 'Oswald', sans-serif; letter-spacing: 1px;
+            font-size: 16px;
+        }
 
-        .check-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
+        .check-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
         .check-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
         
-        .mini-label { display: flex; align-items: center; font-size: 12px; cursor: pointer; color: #ccc; }
-        .mini-label input { margin-right: 5px; accent-color: var(--red); }
+        .mini-label { display: flex; align-items: center; font-size: 14px; cursor: pointer; color: #aaa; transition: 0.2s; }
+        .mini-label:hover { color: #fff; }
+        .mini-label input { margin-right: 8px; accent-color: var(--red); transform: scale(1.2); }
 
-        .agent-label { font-size: 11px; padding: 5px; border-radius: 3px; background: #2a353f; border-left: 3px solid #555; display: flex; align-items: center; }
-        .role-duelist { border-left-color: var(--duelist); }
-        .role-controller { border-left-color: var(--controller); }
-        .role-sentinel { border-left-color: var(--sentinel); }
-        .role-initiator { border-left-color: var(--initiator); }
+        /* Агенты */
+        .agent-label { 
+            font-size: 13px; padding: 8px 5px; background: rgba(255,255,255,0.05); 
+            border-left: 4px solid #555; display: flex; align-items: center; 
+        }
 
         /* --- RESULT BOX --- */
         .result-box {
-            margin-top: 20px; padding: 20px; background: var(--dark-panel); border-left: 5px solid var(--red);
-            width: 90%; max-width: 400px; display: none; text-align: left; margin-bottom: 50px;
+            margin-top: 20px; padding: 25px; 
+            background: linear-gradient(135deg, rgba(31,39,49,0.95), rgba(15,25,35,0.98));
+            border: 1px solid var(--border);
+            border-top: 4px solid var(--red);
+            width: 100%; max-width: 400px; display: none; text-align: left; margin-bottom: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
         }
-        .mode-badge { font-size: 12px; background: #333; padding: 2px 6px; border-radius: 4px; color: #aaa; text-transform: uppercase; margin-bottom: 5px; display: inline-block;}
-        .map-display { font-size: 26px; font-weight: bold; margin-bottom: 10px; color: var(--text); }
-        .team-header { color: var(--red); font-weight: bold; margin-top: 15px; border-bottom: 1px solid var(--border); font-size: 14px; }
-        .player-row { margin-top: 5px; font-size: 15px; }
-        .agent-name { font-size: 12px; color: #8b9bb4; margin-left: 5px; font-style: italic; }
-        .crown { color: gold; margin-right: 5px; }
+        /* Декоративная линия */
+        .result-box::before {
+            content: ""; position: absolute; bottom: 0; right: 0;
+            width: 20px; height: 20px;
+            background: linear-gradient(135deg, transparent 50%, var(--red) 50%);
+        }
+
+        .mode-badge { font-size: 14px; background: rgba(255, 255, 255, 0.1); padding: 4px 8px; color: #fff; text-transform: uppercase; margin-bottom: 5px; display: inline-block; letter-spacing: 1px;}
+        .map-display { font-size: 36px; font-weight: bold; margin-bottom: 15px; color: #fff; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .team-header { color: var(--red); font-weight: bold; margin-top: 20px; border-bottom: 1px solid #444; font-size: 18px; letter-spacing: 1px; padding-bottom: 5px; }
+        .player-row { margin-top: 8px; font-size: 18px; display: flex; align-items: center; }
+        .agent-name { font-size: 14px; color: #8b9bb4; margin-left: 8px; font-style: normal; background: rgba(0,0,0,0.3); padding: 0 4px; border-radius: 2px; }
+        .crown { color: #f1c40f; margin-right: 8px; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <h2>VALORANT 2026</h2>
+    <h2>VALORANT PROTOCOL</h2>
 
     <div class="mode-switch-container">
         <label class="switch">
@@ -132,20 +232,19 @@
         <canvas id="wheelCanvas" width="500" height="500"></canvas>
     </div>
     
-    <div id="playerCounter" style="color: #8b9bb4; font-size: 14px; margin-bottom: 10px;">0 Players</div>
+    <div id="playerCounter" style="color: #8b9bb4; font-size: 16px; margin-bottom: 15px; letter-spacing: 1px;">WAITING FOR PLAYERS...</div>
 
     <div class="roster-grid" id="rosterArea"></div>
 
-    <button class="btn" onclick="spinWheel()">LOCK IN & START</button>
+    <button class="btn" onclick="spinWheel()">LOCK IN</button>
 
     <button class="btn-settings" onclick="toggleSettings()">
-        <span>⚙️ Расширенные настройки</span>
+        <span>⚙️ SYSTEM SETTINGS</span>
         <span id="settingsArrow">▼</span>
     </button>
 
     <div class="settings-panel" id="settingsPanel">
-        
-        <div class="section-title">Игровой режим</div>
+        <div class="section-title">GAME MODE</div>
         <select id="gameMode" onchange="updateMapPool()">
             <option value="Unrated">Unrated (Standard)</option>
             <option value="Competitive">Competitive (Ranked)</option>
@@ -155,17 +254,17 @@
             <option value="Escalation">Escalation</option>
         </select>
 
-        <div class="section-title">Пул карт <span style="float:right; cursor:pointer;" onclick="toggleAll('map')">[All]</span></div>
+        <div class="section-title">MAP POOL <span style="float:right; cursor:pointer; opacity: 0.5;" onclick="toggleAll('map')">[ALL]</span></div>
         <div class="check-grid" id="mapsGrid"></div>
 
         <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
-            <span>Агенты (Random Pick)</span>
+            <span>SMART AGENTS</span>
             <label class="switch" style="width:30px; height:16px;">
                 <input type="checkbox" id="enableAgents">
                 <span class="slider"></span>
             </label>
         </div>
-        <div style="font-size: 11px; color: #666; margin-bottom: 5px;">*Гарантирует 1 Смокера и 1 Дуэлянта</div>
+        <div style="font-size: 12px; color: #666; margin-bottom: 10px;">*Guaranteed: 1 Controller, 1 Duelist</div>
         <div class="check-grid-3" id="agentsGrid"></div>
     </div>
 
@@ -173,10 +272,10 @@
         <div class="mode-badge" id="resMode">Unrated</div>
         <div class="map-display" id="resMap">MAP NAME</div>
         
-        <div class="team-header">TEAM A (Attack)</div>
+        <div class="team-header">ATTACKERS</div>
         <div id="resTeamA"></div>
 
-        <div class="team-header">TEAM B (Defense)</div>
+        <div class="team-header">DEFENDERS</div>
         <div id="resTeamB"></div>
     </div>
 
@@ -198,14 +297,14 @@
 
         const canvas = document.getElementById("wheelCanvas");
         const ctx = canvas.getContext("2d");
-        const colors = ["#ff4655", "#0f1923", "#535c68", "#2c3e50", "#c0392b", "#8e44ad", "#2980b9", "#16a085"];
+        // Палитра Valorant
+        const colors = ["#ff4655", "#0f1923", "#ece8e1", "#535c68", "#bd3944", "#364f6b", "#4a0e13", "#7f8c8d"];
         let currentRotation = 0;
 
         function init() {
             renderRoster();
-            updateMapPool(); // Загружаем карты в зависимости от режима
-
-            // Рендер агентов
+            updateMapPool();
+            
             const agentContainer = document.getElementById("agentsGrid");
             agentContainer.innerHTML = ''; 
             
@@ -214,7 +313,7 @@
                 list.forEach(a => {
                     htmlBuffer += `
                         <label class="mini-label agent-label ${roleClass}">
-                            <input type="checkbox" class="agent-check ${roleClass}" value="${a}" checked> ${a}
+                            <input type="checkbox" class="agent-check ${roleClass}" value="${a}" checked> ${a.toUpperCase()}
                         </label>`;
                 });
                 agentContainer.innerHTML += htmlBuffer;
@@ -228,26 +327,23 @@
             drawWheel([]);
         }
 
-        // НОВАЯ ФУНКЦИЯ: Обновляет карты при смене режима
         function updateMapPool() {
             const mode = document.getElementById("gameMode").value;
             const mapContainer = document.getElementById("mapsGrid");
-            mapContainer.innerHTML = ''; // Очищаем старые
+            mapContainer.innerHTML = ''; 
 
             let targetMaps = mapsData.std;
             let icon = "⭐";
 
-            // Если выбран TDM - загружаем только TDM карты
             if (mode === "Team Deathmatch") {
                 targetMaps = mapsData.tdm;
-                icon = "🆕";
+                icon = "💀";
             }
 
-            // Рендерим нужный список
             targetMaps.forEach(m => {
                 mapContainer.innerHTML += `
                 <label class="mini-label">
-                    <input type="checkbox" class="map-check" value="${m}" checked> ${icon} ${m}
+                    <input type="checkbox" class="map-check" value="${m}" checked> ${m.toUpperCase()}
                 </label>`;
             });
         }
@@ -301,7 +397,7 @@
             plusBtn.className = 'add-btn';
             plusBtn.innerHTML = '+';
             plusBtn.onclick = () => {
-                const name = prompt("Имя игрока:");
+                const name = prompt("CODENAME:");
                 if (name && name.trim()) {
                     customPlayers.push(name.trim());
                     renderRoster();
@@ -314,8 +410,8 @@
         function updateUI() {
             const selected = Array.from(document.querySelectorAll('.player-checkbox:checked')).map(c => c.value);
             const count = selected.length;
-            let modeText = count >= 2 ? `(${Math.floor(count/2)} vs ${Math.ceil(count/2)})` : "(Недостаточно)";
-            document.getElementById("playerCounter").innerText = `${count} Players ${modeText}`;
+            let modeText = count >= 2 ? `(${Math.floor(count/2)} vs ${Math.ceil(count/2)})` : "";
+            document.getElementById("playerCounter").innerText = `${count} AGENTS READY ${modeText}`;
             drawWheel(selected);
         }
 
@@ -363,16 +459,23 @@
         function drawWheel(names) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if (names.length === 0) {
-                ctx.beginPath(); ctx.arc(250, 250, 250, 0, 2*Math.PI); ctx.fillStyle="#1f2731"; ctx.fill();
+                ctx.beginPath(); ctx.arc(250, 250, 240, 0, 2*Math.PI); 
+                ctx.fillStyle = "rgba(255, 70, 85, 0.1)"; ctx.fill(); 
+                ctx.lineWidth = 5; ctx.strokeStyle = "#ff4655"; ctx.stroke();
+                
+                ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "bold 30px Oswald";
+                ctx.fillText("WAITING", 250, 250);
                 return;
             }
             const arc = (2*Math.PI)/names.length;
             names.forEach((n, i) => {
                 ctx.beginPath(); ctx.fillStyle = colors[i % colors.length];
-                ctx.moveTo(250, 250); ctx.arc(250, 250, 250, i*arc, (i+1)*arc); ctx.fill(); ctx.stroke();
+                ctx.moveTo(250, 250); ctx.arc(250, 250, 240, i*arc, (i+1)*arc); ctx.fill(); 
+                ctx.stroke(); // Разделители
+
                 ctx.save(); ctx.translate(250, 250); ctx.rotate(i*arc + arc/2);
-                ctx.textAlign = "right"; ctx.fillStyle = "#fff"; ctx.font = "bold 20px Arial";
-                ctx.fillText(n, 230, 10); ctx.restore();
+                ctx.textAlign = "right"; ctx.fillStyle = "#fff"; ctx.font = "bold 22px Oswald";
+                ctx.fillText(n.toUpperCase(), 220, 10); ctx.restore();
             });
         }
 
@@ -380,8 +483,8 @@
             const players = Array.from(document.querySelectorAll('.player-checkbox:checked')).map(c => c.value);
             const maps = Array.from(document.querySelectorAll('.map-check:checked')).map(c => c.value);
 
-            if (players.length < 2) { alert("Минимум 2 игрока!"); return; }
-            if (maps.length === 0) { alert("Выберите карты!"); return; }
+            if (players.length < 2) { alert("NEED MORE AGENTS!"); return; }
+            if (maps.length === 0) { alert("SELECT MAPS!"); return; }
 
             document.getElementById("result").style.display = "none";
             currentRotation += Math.floor(3000 + Math.random() * 360);
@@ -406,11 +509,11 @@
                 <div class="player-row">
                     ${isCap ? '<span class="crown">👑</span>' : ''}
                     <b>${name}</b>
-                    ${agent ? `<span class="agent-name">(${agent})</span>` : ''}
+                    ${agent ? `<span class="agent-name">// ${agent.toUpperCase()}</span>` : ''}
                 </div>`;
 
             document.getElementById("resMode").innerText = mode;
-            document.getElementById("resMap").innerText = map.toUpperCase();
+            document.getElementById("resMap").innerText = map;
             
             document.getElementById("resTeamA").innerHTML = teamA_names.map((n, i) => buildRow(n, teamA_agents[i], i===0)).join('');
             document.getElementById("resTeamB").innerHTML = teamB_names.map((n, i) => buildRow(n, teamB_agents[i], i===0)).join('');
