@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f1923">
-    <title>Valorant Lobby Manager</title>
+    <title>Valorant Randomizer</title>
     <style>
         body {
             background-color: #0f1923;
             color: #ece8e1;
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
-            padding: 20px 10px; /* Чуть больше отступ сверху */
+            padding: 20px 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -19,7 +19,56 @@
             min-height: 100vh;
         }
 
-        h2, h3 { color: #ff4655; text-transform: uppercase; margin: 10px 0; letter-spacing: 1px; text-align: center; }
+        /* ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА */
+        .mode-switch-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            background: #1f2731;
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: 1px solid #535c68;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .switch-label {
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-left: 10px;
+            color: #ece8e1;
+            font-size: 16px;
+        }
+        /* Кастомный чекбокс-слайдер */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #535c68;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #ff4655; }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+
+        h2 { color: #ff4655; text-transform: uppercase; margin: 10px 0; }
         
         /* КОЛЕСО */
         .wheel-container {
@@ -30,21 +79,18 @@
             filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
         }
         canvas {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             transform: rotate(-90deg);
             transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1);
         }
         .arrow {
-            position: absolute;
-            top: -15px; left: 50%;
+            position: absolute; top: -15px; left: 50%;
             transform: translateX(-50%);
             width: 0; height: 0;
             border-left: 15px solid transparent;
             border-right: 15px solid transparent;
             border-top: 30px solid #ece8e1;
             z-index: 10;
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
         }
 
         /* СЕТКА ИГРОКОВ */
@@ -52,39 +98,50 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
-            width: 100%;
-            max-width: 400px;
+            width: 100%; max-width: 400px;
             margin-bottom: 15px;
         }
         
         .player-checkbox { display: none; }
         
+        /* Кнопка игрока */
         .player-label {
             background: #1f2731;
             border: 1px solid #535c68;
-            padding: 12px 5px;
+            padding: 12px 2px;
             text-align: center;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             transition: all 0.2s;
             user-select: none;
-            /* Защита от случайного дабл-клика для зума на айфонах */
-            touch-action: manipulation; 
+            touch-action: manipulation;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
-        
         .player-checkbox:checked + .player-label {
             background: #ff4655;
             color: white;
             border-color: #ff4655;
             font-weight: bold;
-            box-shadow: 0 0 15px rgba(255, 70, 85, 0.3);
-            transform: translateY(-2px);
+            box-shadow: 0 0 10px rgba(255, 70, 85, 0.3);
         }
+
+        /* КНОПКА ПЛЮС */
+        .add-btn {
+            background: #16a085; /* Зеленый цвет для плюсика */
+            color: white;
+            border: 1px dashed #fff;
+            font-size: 20px;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+        .add-btn:active { transform: scale(0.95); }
 
         .counter { color: #8b9bb4; font-size: 14px; margin-bottom: 10px; }
 
-        /* КНОПКИ */
+        /* КНОПКА START */
         .btn {
             background: linear-gradient(45deg, #ff4655, #d63c4b);
             color: white; border: none;
@@ -93,63 +150,41 @@
             border-radius: 4px; cursor: pointer;
             text-transform: uppercase;
             margin-top: 10px;
-            box-shadow: 0 4px 0 #9e1c28; /* Эффект 3D кнопки */
+            box-shadow: 0 4px 0 #9e1c28;
             transition: transform 0.1s, box-shadow 0.1s;
         }
-        .btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 #9e1c28;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid #535c68;
-            padding: 8px;
-            font-size: 12px;
-            margin-top: 5px;
-            box-shadow: none;
-        }
+        .btn:active { transform: translateY(4px); box-shadow: 0 0 0 #9e1c28; }
+        .btn-outline { background: transparent; border: 1px solid #535c68; padding: 8px; font-size: 12px; margin-top: 5px; box-shadow: none; }
 
         /* КАРТЫ */
         .maps-container {
-            width: 100%; max-width: 380px; /* Чуть уже чтобы не прилипало */
-            background: #1f2731;
-            padding: 15px;
-            border-radius: 6px;
-            margin-top: 30px;
-            border: 1px solid #535c68;
+            width: 100%; max-width: 380px;
+            background: #1f2731; padding: 15px; border-radius: 6px; margin-top: 30px; border: 1px solid #535c68;
         }
         .maps-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            margin-top: 10px;
-            text-align: left;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; text-align: left;
         }
-        .map-label { 
-            display: flex; 
-            align-items: center; 
-            font-size: 14px; 
-            cursor: pointer;
-        }
+        .map-label { display: flex; align-items: center; font-size: 14px; cursor: pointer; }
         .map-label input { margin-right: 10px; accent-color: #ff4655; }
 
         /* РЕЗУЛЬТАТЫ */
         .result-box {
-            margin-top: 20px;
-            padding: 20px;
-            background: #1f2731;
-            border-left: 5px solid #ff4655;
-            width: 90%; max-width: 400px;
-            display: none; text-align: left;
-            margin-bottom: 50px;
+            margin-top: 20px; padding: 20px; background: #1f2731; border-left: 5px solid #ff4655;
+            width: 90%; max-width: 400px; display: none; text-align: left; margin-bottom: 50px;
         }
         .team-header { color: #ff4655; font-weight: bold; margin-top: 15px; border-bottom: 1px solid #535c68; padding-bottom: 5px; }
-        .map-display { font-size: 28px; font-weight: bold; text-align: center; margin-bottom: 15px; color: #ece8e1; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-
+        .map-display { font-size: 28px; font-weight: bold; text-align: center; margin-bottom: 15px; color: #ece8e1; }
     </style>
 </head>
 <body>
+
+    <div class="mode-switch-container">
+        <label class="switch">
+            <input type="checkbox" id="psychoMode" checked onchange="toggleMode()">
+            <span class="slider"></span>
+        </label>
+        <span class="switch-label">РЕЖИМ "ПСИХУШКА"</span>
+    </div>
 
     <div class="wheel-container">
         <div class="arrow"></div>
@@ -172,10 +207,8 @@
 
     <div class="result-box" id="result">
         <div class="map-display" id="resMap"></div>
-        
         <div class="team-header">TEAM A (Attack)</div>
         <div id="resTeamA"></div>
-
         <div class="team-header">TEAM B (Defense)</div>
         <div id="resTeamB"></div>
     </div>
@@ -185,12 +218,16 @@
         const ctx = canvas.getContext("2d");
         
         // --- ДАННЫЕ ---
+        // Постоянный состав (Психушка)
         const friends = [
             "Влад", "Никита", "Диана", 
             "Василиса", "Вова", "Богдан", 
             "Артем Донбасс", "Артём рыбак", "Ivy"
         ];
         
+        // Сюда падают те, кого добавили через плюсик
+        let customPlayers = [];
+
         const allMaps = [
             "Ascent", "Bind", "Haven", "Split", 
             "Icebox", "Breeze", "Fracture", "Pearl", 
@@ -200,21 +237,63 @@
         const colors = ["#ff4655", "#0f1923", "#535c68", "#2c3e50", "#c0392b", "#8e44ad", "#2980b9", "#16a085"];
         let currentRotation = 0;
 
-        // --- ИНИЦИАЛИЗАЦИЯ ---
-        function init() {
-            // 1. Кнопки друзей
+        // --- ЛОГИКА ИНТЕРФЕЙСА ---
+        
+        function toggleMode() {
+            // При переключении режима очищаем "гостей", чтобы не путаться
+            customPlayers = []; 
+            renderRoster();
+            updateUI();
+        }
+
+        function renderRoster() {
+            const isPsycho = document.getElementById('psychoMode').checked;
             const rosterDiv = document.getElementById("rosterArea");
-            friends.forEach((name, index) => {
-                const id = `p_${index}`;
+            rosterDiv.innerHTML = '';
+
+            // 1. Если режим Психушки - рисуем друзей
+            if (isPsycho) {
+                friends.forEach((name, index) => {
+                    const id = `friend_${index}`;
+                    rosterDiv.innerHTML += `
+                        <input type="checkbox" class="player-checkbox" id="${id}" value="${name}" onchange="updateUI()">
+                        <label class="player-label" for="${id}">${name}</label>
+                    `;
+                });
+            }
+
+            // 2. Рисуем добавленных вручную (они всегда есть, если массив не пуст)
+            customPlayers.forEach((name, index) => {
+                const id = `custom_${index}`;
+                // Кастомные игроки сразу выбраны (checked)
                 rosterDiv.innerHTML += `
-                    <input type="checkbox" class="player-checkbox" id="${id}" value="${name}" onchange="updateUI()">
+                    <input type="checkbox" class="player-checkbox" id="${id}" value="${name}" checked onchange="updateUI()">
                     <label class="player-label" for="${id}">${name}</label>
                 `;
             });
 
-            // 2. Чекбоксы карт
+            // 3. Рисуем кнопку ПЛЮСИК
+            const plusBtn = document.createElement('div');
+            plusBtn.className = 'add-btn';
+            plusBtn.innerHTML = '+';
+            plusBtn.onclick = addCustomPlayer;
+            rosterDiv.appendChild(plusBtn);
+        }
+
+        function addCustomPlayer() {
+            const name = prompt("Введите имя игрока:");
+            if (name && name.trim() !== "") {
+                customPlayers.push(name.trim());
+                renderRoster(); // Перерисовываем список
+                updateUI();     // Обновляем колесо
+            }
+        }
+
+        // --- ИНИЦИАЛИЗАЦИЯ КАРТ И СТАРТ ---
+        function init() {
+            // Карты
             const mapsDiv = document.getElementById("mapsArea");
-            allMaps.forEach((map, index) => {
+            allMaps.forEach((map) => {
                 mapsDiv.innerHTML += `
                     <label class="map-label">
                         <input type="checkbox" class="map-checkbox" value="${map}" checked> ${map}
@@ -222,10 +301,11 @@
                 `;
             });
 
-            drawWheel([]); 
+            renderRoster(); // Первый запуск
+            drawWheel([]);
         }
 
-        // --- ЛОГИКА ---
+        // --- СТАНДАРТНАЯ ЛОГИКА (БЕЗ ИЗМЕНЕНИЙ) ---
         function getSelectedPlayers() {
             return Array.from(document.querySelectorAll('.player-checkbox:checked')).map(cb => cb.value);
         }
@@ -300,7 +380,6 @@
                 return;
             }
 
-            // Прячем старый результат если был
             document.getElementById("result").style.display = "none";
 
             const randomDegree = Math.floor(3000 + Math.random() * 360); 
@@ -313,7 +392,6 @@
         }
 
         function showResults(players, activeMaps) {
-            // Fisher-Yates shuffle
             for (let i = players.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [players[i], players[j]] = [players[j], players[i]];
@@ -330,7 +408,6 @@
 
             const resDiv = document.getElementById("result");
             resDiv.style.display = "block";
-            // Плавный скролл к результату
             resDiv.scrollIntoView({behavior: "smooth", block: "center"});
         }
 
