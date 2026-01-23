@@ -208,12 +208,15 @@
         const colors = ["#ff4655", "#0f1923", "#535c68", "#2c3e50", "#c0392b", "#8e44ad", "#2980b9", "#16a085"];
         let currentRotation = 0;
 
-        // --- INIT ---
+// --- INIT (ИСПРАВЛЕННАЯ ВЕРСИЯ) ---
         function init() {
             renderRoster();
             
             // Рендер карт
             const mapContainer = document.getElementById("mapsGrid");
+            // Очистка на всякий случай
+            mapContainer.innerHTML = '';
+            
             // Стандартные
             mapsData.std.forEach(m => addCheck(mapContainer, m, "map-check", true, "⭐ " + m));
             // TDM
@@ -221,14 +224,21 @@
 
             // Рендер агентов
             const agentContainer = document.getElementById("agentsGrid");
+            agentContainer.innerHTML = ''; // Важная очистка
+            
             const addAgent = (list, roleClass) => {
+                let htmlBuffer = ''; // Собираем HTML в переменную, чтобы не дергать DOM
                 list.forEach(a => {
-                    agentContainer.innerHTML += `
+                    // ВОТ ТУТ БЫЛА ОШИБКА:
+                    // Добавляем ${roleClass} также внутрь <input class="...">
+                    htmlBuffer += `
                         <label class="mini-label agent-label ${roleClass}">
-                            <input type="checkbox" class="agent-check" value="${a}" data-role="${roleClass}" checked> ${a}
+                            <input type="checkbox" class="agent-check ${roleClass}" value="${a}" checked> ${a}
                         </label>`;
                 });
+                agentContainer.innerHTML += htmlBuffer;
             };
+            
             addAgent(agentsData.duelists, "role-duelist");
             addAgent(agentsData.controllers, "role-controller");
             addAgent(agentsData.initiators, "role-initiator");
@@ -430,3 +440,4 @@
     </script>
 </body>
 </html>
+
