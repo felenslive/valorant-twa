@@ -12,10 +12,10 @@
             --red: #ff4655;
             --dark-panel: #1f2731;
             --border: #535c68;
-            --duelist: #f39c12; /* Желтый/Оранжевый */
-            --controller: #8e44ad; /* Фиолетовый */
-            --sentinel: #16a085; /* Циан */
-            --initiator: #2980b9; /* Синий */
+            --duelist: #f39c12; 
+            --controller: #8e44ad;
+            --sentinel: #16a085;
+            --initiator: #2980b9;
         }
 
         body {
@@ -31,7 +31,6 @@
             min-height: 100vh;
         }
 
-        /* --- UI COMPONENTS --- */
         h2 { color: var(--red); text-transform: uppercase; margin: 0 0 15px 0; letter-spacing: 2px; }
         
         /* ПСИХУШКА MODE */
@@ -89,17 +88,14 @@
 
         .section-title { color: #8b9bb4; font-size: 12px; text-transform: uppercase; margin-top: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px; }
         
-        /* Dropdown */
         select { width: 100%; padding: 10px; background: var(--dark-panel); color: white; border: 1px solid var(--border); border-radius: 4px; outline: none; }
 
-        /* Checkbox Grids */
         .check-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
         .check-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
         
         .mini-label { display: flex; align-items: center; font-size: 12px; cursor: pointer; color: #ccc; }
         .mini-label input { margin-right: 5px; accent-color: var(--red); }
 
-        /* АГЕНТЫ (Цветные рамки) */
         .agent-label { font-size: 11px; padding: 5px; border-radius: 3px; background: #2a353f; border-left: 3px solid #555; display: flex; align-items: center; }
         .role-duelist { border-left-color: var(--duelist); }
         .role-controller { border-left-color: var(--controller); }
@@ -150,7 +146,7 @@
     <div class="settings-panel" id="settingsPanel">
         
         <div class="section-title">Игровой режим</div>
-        <select id="gameMode">
+        <select id="gameMode" onchange="updateMapPool()">
             <option value="Unrated">Unrated (Standard)</option>
             <option value="Competitive">Competitive (Ranked)</option>
             <option value="Team Deathmatch">Team Deathmatch (TDM)</option>
@@ -185,20 +181,17 @@
     </div>
 
     <script>
-        // --- ДАННЫЕ 2026 ---
         const friends = ["Влад", "Никита", "Диана", "Василиса", "Вова", "Богдан", "Артем Донбасс", "Артём рыбак", "Ivy"];
         let customPlayers = [];
 
-        // Карты
         const mapsData = {
             std: ["Bind", "Haven", "Split", "Ascent", "Icebox", "Breeze", "Fracture", "Pearl", "Lotus", "Sunset", "Abyss", "Corrode"],
             tdm: ["District", "Kasbah", "Piazza", "Drift", "Glitch"]
         };
 
-        // Агенты по ролям
         const agentsData = {
             duelists: ["Jett", "Reyna", "Raze", "Phoenix", "Yoru", "Neon", "ISO", "Clove", "Waylay", "Tejo"],
-            controllers: ["Brimstone", "Omen", "Viper", "Astra", "Harbor"], // Смокеры
+            controllers: ["Brimstone", "Omen", "Viper", "Astra", "Harbor"],
             initiators: ["Sova", "Breach", "Skye", "KAY/O", "Fade", "Gekko"],
             sentinels: ["Sage", "Cypher", "Killjoy", "Chamber", "Deadlock", "Vyse", "Veto"]
         };
@@ -208,29 +201,17 @@
         const colors = ["#ff4655", "#0f1923", "#535c68", "#2c3e50", "#c0392b", "#8e44ad", "#2980b9", "#16a085"];
         let currentRotation = 0;
 
-// --- INIT (ИСПРАВЛЕННАЯ ВЕРСИЯ) ---
         function init() {
             renderRoster();
-            
-            // Рендер карт
-            const mapContainer = document.getElementById("mapsGrid");
-            // Очистка на всякий случай
-            mapContainer.innerHTML = '';
-            
-            // Стандартные
-            mapsData.std.forEach(m => addCheck(mapContainer, m, "map-check", true, "⭐ " + m));
-            // TDM
-            mapsData.tdm.forEach(m => addCheck(mapContainer, m, "map-check", true, "🆕 " + m));
+            updateMapPool(); // Загружаем карты в зависимости от режима
 
             // Рендер агентов
             const agentContainer = document.getElementById("agentsGrid");
-            agentContainer.innerHTML = ''; // Важная очистка
+            agentContainer.innerHTML = ''; 
             
             const addAgent = (list, roleClass) => {
-                let htmlBuffer = ''; // Собираем HTML в переменную, чтобы не дергать DOM
+                let htmlBuffer = ''; 
                 list.forEach(a => {
-                    // ВОТ ТУТ БЫЛА ОШИБКА:
-                    // Добавляем ${roleClass} также внутрь <input class="...">
                     htmlBuffer += `
                         <label class="mini-label agent-label ${roleClass}">
                             <input type="checkbox" class="agent-check ${roleClass}" value="${a}" checked> ${a}
@@ -247,14 +228,30 @@
             drawWheel([]);
         }
 
-        function addCheck(container, value, cls, checked, labelText) {
-            container.innerHTML += `
+        // НОВАЯ ФУНКЦИЯ: Обновляет карты при смене режима
+        function updateMapPool() {
+            const mode = document.getElementById("gameMode").value;
+            const mapContainer = document.getElementById("mapsGrid");
+            mapContainer.innerHTML = ''; // Очищаем старые
+
+            let targetMaps = mapsData.std;
+            let icon = "⭐";
+
+            // Если выбран TDM - загружаем только TDM карты
+            if (mode === "Team Deathmatch") {
+                targetMaps = mapsData.tdm;
+                icon = "🆕";
+            }
+
+            // Рендерим нужный список
+            targetMaps.forEach(m => {
+                mapContainer.innerHTML += `
                 <label class="mini-label">
-                    <input type="checkbox" class="${cls}" value="${value}" ${checked ? 'checked' : ''}> ${labelText}
+                    <input type="checkbox" class="map-check" value="${m}" checked> ${icon} ${m}
                 </label>`;
+            });
         }
 
-        // --- ЛОГИКА UI ---
         function toggleSettings() {
             const panel = document.getElementById("settingsPanel");
             const arrow = document.getElementById("settingsArrow");
@@ -264,7 +261,6 @@
             } else {
                 panel.style.display = "block";
                 arrow.innerText = "▲";
-                // Скролл вниз к настройкам
                 panel.scrollIntoView({behavior: "smooth"});
             }
         }
@@ -272,6 +268,7 @@
         function toggleAll(type) {
             const cls = type === 'map' ? '.map-check' : '.agent-check';
             const boxes = document.querySelectorAll(cls);
+            if(boxes.length === 0) return;
             const newState = !boxes[0].checked;
             boxes.forEach(b => b.checked = newState);
         }
@@ -322,44 +319,36 @@
             drawWheel(selected);
         }
 
-        // --- SMART AGENT PICKER ---
         function assignAgents(teamSize) {
-            // Собираем доступных агентов
             const getAvail = (cls) => Array.from(document.querySelectorAll(`.agent-check.${cls}:checked`)).map(c => c.value);
             
             let poolDuelists = getAvail('role-duelist');
             let poolControllers = getAvail('role-controller');
             let poolOthers = [...getAvail('role-sentinel'), ...getAvail('role-initiator')];
             
-            // Если включен рандомайзер
             if (!document.getElementById("enableAgents").checked) return Array(teamSize).fill(null);
 
             let teamAgents = [];
 
-            // ШАГ 1: Обязательно 1 смокер
             if (poolControllers.length > 0) {
                 const pick = poolControllers.splice(Math.floor(Math.random() * poolControllers.length), 1)[0];
                 teamAgents.push(pick);
             }
 
-            // ШАГ 2: Обязательно 1 дуэлянт (если место есть)
             if (teamAgents.length < teamSize && poolDuelists.length > 0) {
                 const pick = poolDuelists.splice(Math.floor(Math.random() * poolDuelists.length), 1)[0];
                 teamAgents.push(pick);
             }
 
-            // ШАГ 3: Заполняем остальное рандомом
-            // Сливаем остатки в один пул
             let fullPool = [...poolDuelists, ...poolControllers, ...poolOthers];
             
             while (teamAgents.length < teamSize) {
-                if (fullPool.length === 0) { teamAgents.push("???"); continue; } // Кончились агенты
+                if (fullPool.length === 0) { teamAgents.push("???"); continue; }
                 const r = Math.floor(Math.random() * fullPool.length);
                 teamAgents.push(fullPool[r]);
                 fullPool.splice(r, 1);
             }
 
-            // ШАГ 4: Перемешиваем роли внутри команды, чтобы смокер не всегда был у капитана
             return shuffle(teamAgents);
         }
 
@@ -371,7 +360,6 @@
             return array;
         }
 
-        // --- CORE LOGIC ---
         function drawWheel(names) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if (names.length === 0) {
@@ -403,21 +391,17 @@
         }
 
         function showResults(players, maps) {
-            // 1. Выбор карты и режима
             const map = maps[Math.floor(Math.random() * maps.length)];
             const mode = document.getElementById("gameMode").value;
 
-            // 2. Делим команды
             shuffle(players);
             const mid = Math.ceil(players.length / 2);
             const teamA_names = players.slice(0, mid);
             const teamB_names = players.slice(mid);
 
-            // 3. Раздаем агентов
             const teamA_agents = assignAgents(teamA_names.length);
             const teamB_agents = assignAgents(teamB_names.length);
 
-            // 4. Формируем HTML
             const buildRow = (name, agent, isCap) => `
                 <div class="player-row">
                     ${isCap ? '<span class="crown">👑</span>' : ''}
@@ -440,4 +424,3 @@
     </script>
 </body>
 </html>
-
