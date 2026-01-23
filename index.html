@@ -4,11 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f1923">
-    <title>Valorant Randomizer</title>
+    <title>Valorant Manager 2026</title>
     <style>
+        :root {
+            --bg: #0f1923;
+            --text: #ece8e1;
+            --red: #ff4655;
+            --dark-panel: #1f2731;
+            --border: #535c68;
+            --duelist: #f39c12; /* Желтый/Оранжевый */
+            --controller: #8e44ad; /* Фиолетовый */
+            --sentinel: #16a085; /* Циан */
+            --initiator: #2980b9; /* Синий */
+        }
+
         body {
-            background-color: #0f1923;
-            color: #ece8e1;
+            background-color: var(--bg);
+            color: var(--text);
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
             padding: 20px 10px;
@@ -19,171 +31,104 @@
             min-height: 100vh;
         }
 
-        /* ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА */
+        /* --- UI COMPONENTS --- */
+        h2 { color: var(--red); text-transform: uppercase; margin: 0 0 15px 0; letter-spacing: 2px; }
+        
+        /* ПСИХУШКА MODE */
         .mode-switch-container {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-            background: #1f2731;
-            padding: 10px 20px;
-            border-radius: 50px;
-            border: 1px solid #535c68;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex; align-items: center; margin-bottom: 20px;
+            background: var(--dark-panel); padding: 8px 15px; border-radius: 50px;
+            border: 1px solid var(--border);
         }
-        .switch-label {
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-left: 10px;
-            color: #ece8e1;
-            font-size: 16px;
-        }
-        /* Кастомный чекбокс-слайдер */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 26px;
-        }
+        .switch-label { font-weight: bold; font-size: 14px; margin-left: 10px; text-transform: uppercase;}
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #535c68;
-            transition: .4s;
-            border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider { background-color: #ff4655; }
-        input:checked + .slider:before { transform: translateX(24px); }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border); transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--red); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
-
-        h2 { color: #ff4655; text-transform: uppercase; margin: 10px 0; }
-        
         /* КОЛЕСО */
-        .wheel-container {
-            position: relative;
-            width: 280px;
-            height: 280px;
-            margin: 10px 0;
-            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
-        }
-        canvas {
-            width: 100%; height: 100%;
-            transform: rotate(-90deg);
-            transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1);
-        }
-        .arrow {
-            position: absolute; top: -15px; left: 50%;
-            transform: translateX(-50%);
-            width: 0; height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-top: 30px solid #ece8e1;
-            z-index: 10;
-        }
+        .wheel-container { position: relative; width: 260px; height: 260px; margin: 10px 0; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
+        canvas { width: 100%; height: 100%; transform: rotate(-90deg); transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1); }
+        .arrow { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid #ece8e1; z-index: 10; }
 
-        /* СЕТКА ИГРОКОВ */
-        .roster-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            width: 100%; max-width: 400px;
-            margin-bottom: 15px;
-        }
-        
+        /* СПИСОК ИГРОКОВ */
+        .roster-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; max-width: 400px; margin-bottom: 10px; }
         .player-checkbox { display: none; }
-        
-        /* Кнопка игрока */
         .player-label {
-            background: #1f2731;
-            border: 1px solid #535c68;
-            padding: 12px 2px;
-            text-align: center;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.2s;
-            user-select: none;
-            touch-action: manipulation;
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            background: var(--dark-panel); border: 1px solid var(--border); padding: 10px 2px;
+            text-align: center; border-radius: 4px; cursor: pointer; font-size: 13px;
+            transition: 0.2s; user-select: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .player-checkbox:checked + .player-label {
-            background: #ff4655;
-            color: white;
-            border-color: #ff4655;
-            font-weight: bold;
-            box-shadow: 0 0 10px rgba(255, 70, 85, 0.3);
-        }
+        .player-checkbox:checked + .player-label { background: var(--red); color: white; border-color: var(--red); font-weight: bold; }
+        .add-btn { background: #16a085; color: white; border: 1px dashed #fff; font-size: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer; border-radius: 4px; }
 
-        /* КНОПКА ПЛЮС */
-        .add-btn {
-            background: #16a085; /* Зеленый цвет для плюсика */
-            color: white;
-            border: 1px dashed #fff;
-            font-size: 20px;
-            display: flex; justify-content: center; align-items: center;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: 0.2s;
-        }
-        .add-btn:active { transform: scale(0.95); }
-
-        .counter { color: #8b9bb4; font-size: 14px; margin-bottom: 10px; }
-
-        /* КНОПКА START */
+        /* MAIN BUTTONS */
         .btn {
-            background: linear-gradient(45deg, #ff4655, #d63c4b);
-            color: white; border: none;
-            padding: 15px 0; width: 100%; max-width: 400px;
-            font-size: 18px; font-weight: bold;
-            border-radius: 4px; cursor: pointer;
-            text-transform: uppercase;
-            margin-top: 10px;
-            box-shadow: 0 4px 0 #9e1c28;
-            transition: transform 0.1s, box-shadow 0.1s;
+            background: linear-gradient(45deg, var(--red), #d63c4b); color: white; border: none;
+            padding: 15px 0; width: 100%; max-width: 400px; font-size: 18px; font-weight: bold;
+            border-radius: 4px; cursor: pointer; text-transform: uppercase; margin-top: 10px;
+            box-shadow: 0 4px 0 #9e1c28; transition: transform 0.1s, box-shadow 0.1s;
         }
-        .btn:active { transform: translateY(4px); box-shadow: 0 0 0 #9e1c28; }
-        .btn-outline { background: transparent; border: 1px solid #535c68; padding: 8px; font-size: 12px; margin-top: 5px; box-shadow: none; }
+        .btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        .btn-settings {
+            background: transparent; border: 1px solid var(--border); color: #8b9bb4;
+            padding: 10px; width: 100%; max-width: 400px; margin-top: 20px; cursor: pointer;
+            text-transform: uppercase; font-size: 12px; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center;
+        }
 
-        /* КАРТЫ */
-        .maps-container {
-            width: 100%; max-width: 380px;
-            background: #1f2731; padding: 15px; border-radius: 6px; margin-top: 30px; border: 1px solid #535c68;
+        /* --- ADVANCED SETTINGS PANEL --- */
+        .settings-panel {
+            display: none; width: 90%; max-width: 380px; background: #182029;
+            border: 1px solid var(--border); border-top: none; padding: 15px;
+            box-sizing: border-box; animation: slideDown 0.3s ease;
         }
-        .maps-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; text-align: left;
-        }
-        .map-label { display: flex; align-items: center; font-size: 14px; cursor: pointer; }
-        .map-label input { margin-right: 10px; accent-color: #ff4655; }
+        @keyframes slideDown { from {opacity: 0; transform: translateY(-10px);} to {opacity: 1; transform: translateY(0);} }
 
-        /* РЕЗУЛЬТАТЫ */
+        .section-title { color: #8b9bb4; font-size: 12px; text-transform: uppercase; margin-top: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px; }
+        
+        /* Dropdown */
+        select { width: 100%; padding: 10px; background: var(--dark-panel); color: white; border: 1px solid var(--border); border-radius: 4px; outline: none; }
+
+        /* Checkbox Grids */
+        .check-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
+        .check-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+        
+        .mini-label { display: flex; align-items: center; font-size: 12px; cursor: pointer; color: #ccc; }
+        .mini-label input { margin-right: 5px; accent-color: var(--red); }
+
+        /* АГЕНТЫ (Цветные рамки) */
+        .agent-label { font-size: 11px; padding: 5px; border-radius: 3px; background: #2a353f; border-left: 3px solid #555; display: flex; align-items: center; }
+        .role-duelist { border-left-color: var(--duelist); }
+        .role-controller { border-left-color: var(--controller); }
+        .role-sentinel { border-left-color: var(--sentinel); }
+        .role-initiator { border-left-color: var(--initiator); }
+
+        /* --- RESULT BOX --- */
         .result-box {
-            margin-top: 20px; padding: 20px; background: #1f2731; border-left: 5px solid #ff4655;
+            margin-top: 20px; padding: 20px; background: var(--dark-panel); border-left: 5px solid var(--red);
             width: 90%; max-width: 400px; display: none; text-align: left; margin-bottom: 50px;
         }
-        .team-header { color: #ff4655; font-weight: bold; margin-top: 15px; border-bottom: 1px solid #535c68; padding-bottom: 5px; }
-        .map-display { font-size: 28px; font-weight: bold; text-align: center; margin-bottom: 15px; color: #ece8e1; }
+        .mode-badge { font-size: 12px; background: #333; padding: 2px 6px; border-radius: 4px; color: #aaa; text-transform: uppercase; margin-bottom: 5px; display: inline-block;}
+        .map-display { font-size: 26px; font-weight: bold; margin-bottom: 10px; color: var(--text); }
+        .team-header { color: var(--red); font-weight: bold; margin-top: 15px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .player-row { margin-top: 5px; font-size: 15px; }
+        .agent-name { font-size: 12px; color: #8b9bb4; margin-left: 5px; font-style: italic; }
+        .crown { color: gold; margin-right: 5px; }
     </style>
 </head>
 <body>
+
+    <h2>VALORANT 2026</h2>
 
     <div class="mode-switch-container">
         <label class="switch">
             <input type="checkbox" id="psychoMode" checked onchange="toggleMode()">
             <span class="slider"></span>
         </label>
-        <span class="switch-label">РЕЖИМ "ПСИХУШКА"</span>
+        <span class="switch-label">Squad: Психушка</span>
     </div>
 
     <div class="wheel-container">
@@ -191,57 +136,138 @@
         <canvas id="wheelCanvas" width="500" height="500"></canvas>
     </div>
     
-    <div class="counter" id="playerCounter">Выбрано: 0 (Мало игроков)</div>
+    <div id="playerCounter" style="color: #8b9bb4; font-size: 14px; margin-bottom: 10px;">0 Players</div>
 
     <div class="roster-grid" id="rosterArea"></div>
 
     <button class="btn" onclick="spinWheel()">LOCK IN & START</button>
 
-    <div class="maps-container">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3 style="margin:0; font-size: 16px;">Map Pool</h3>
-            <button class="btn btn-outline" style="width: auto; margin:0;" onclick="toggleMaps()">All / None</button>
+    <button class="btn-settings" onclick="toggleSettings()">
+        <span>⚙️ Расширенные настройки</span>
+        <span id="settingsArrow">▼</span>
+    </button>
+
+    <div class="settings-panel" id="settingsPanel">
+        
+        <div class="section-title">Игровой режим</div>
+        <select id="gameMode">
+            <option value="Unrated">Unrated (Standard)</option>
+            <option value="Competitive">Competitive (Ranked)</option>
+            <option value="Team Deathmatch">Team Deathmatch (TDM)</option>
+            <option value="Deathmatch">Deathmatch</option>
+            <option value="Spike Rush">Spike Rush</option>
+            <option value="Escalation">Escalation</option>
+        </select>
+
+        <div class="section-title">Пул карт <span style="float:right; cursor:pointer;" onclick="toggleAll('map')">[All]</span></div>
+        <div class="check-grid" id="mapsGrid"></div>
+
+        <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Агенты (Random Pick)</span>
+            <label class="switch" style="width:30px; height:16px;">
+                <input type="checkbox" id="enableAgents">
+                <span class="slider"></span>
+            </label>
         </div>
-        <div class="maps-grid" id="mapsArea"></div>
+        <div style="font-size: 11px; color: #666; margin-bottom: 5px;">*Гарантирует 1 Смокера и 1 Дуэлянта</div>
+        <div class="check-grid-3" id="agentsGrid"></div>
     </div>
 
     <div class="result-box" id="result">
-        <div class="map-display" id="resMap"></div>
+        <div class="mode-badge" id="resMode">Unrated</div>
+        <div class="map-display" id="resMap">MAP NAME</div>
+        
         <div class="team-header">TEAM A (Attack)</div>
         <div id="resTeamA"></div>
+
         <div class="team-header">TEAM B (Defense)</div>
         <div id="resTeamB"></div>
     </div>
 
     <script>
-        const canvas = document.getElementById("wheelCanvas");
-        const ctx = canvas.getContext("2d");
-        
-        // --- ДАННЫЕ ---
-        // Постоянный состав (Психушка)
-        const friends = [
-            "Влад", "Никита", "Диана", 
-            "Василиса", "Вова", "Богдан", 
-            "Артем Донбасс", "Артём рыбак", "Ivy"
-        ];
-        
-        // Сюда падают те, кого добавили через плюсик
+        // --- ДАННЫЕ 2026 ---
+        const friends = ["Влад", "Никита", "Диана", "Василиса", "Вова", "Богдан", "Артем Донбасс", "Артём рыбак", "Ivy"];
         let customPlayers = [];
 
-        const allMaps = [
-            "Ascent", "Bind", "Haven", "Split", 
-            "Icebox", "Breeze", "Fracture", "Pearl", 
-            "Lotus", "Sunset", "Abyss"
-        ];
-        
+        // Карты
+        const mapsData = {
+            std: ["Bind", "Haven", "Split", "Ascent", "Icebox", "Breeze", "Fracture", "Pearl", "Lotus", "Sunset", "Abyss", "Corrode"],
+            tdm: ["District", "Kasbah", "Piazza", "Drift", "Glitch"]
+        };
+
+        // Агенты по ролям
+        const agentsData = {
+            duelists: ["Jett", "Reyna", "Raze", "Phoenix", "Yoru", "Neon", "ISO", "Clove", "Waylay", "Tejo"],
+            controllers: ["Brimstone", "Omen", "Viper", "Astra", "Harbor"], // Смокеры
+            initiators: ["Sova", "Breach", "Skye", "KAY/O", "Fade", "Gekko"],
+            sentinels: ["Sage", "Cypher", "Killjoy", "Chamber", "Deadlock", "Vyse", "Veto"]
+        };
+
+        const canvas = document.getElementById("wheelCanvas");
+        const ctx = canvas.getContext("2d");
         const colors = ["#ff4655", "#0f1923", "#535c68", "#2c3e50", "#c0392b", "#8e44ad", "#2980b9", "#16a085"];
         let currentRotation = 0;
 
-        // --- ЛОГИКА ИНТЕРФЕЙСА ---
-        
+        // --- INIT ---
+        function init() {
+            renderRoster();
+            
+            // Рендер карт
+            const mapContainer = document.getElementById("mapsGrid");
+            // Стандартные
+            mapsData.std.forEach(m => addCheck(mapContainer, m, "map-check", true, "⭐ " + m));
+            // TDM
+            mapsData.tdm.forEach(m => addCheck(mapContainer, m, "map-check", true, "🆕 " + m));
+
+            // Рендер агентов
+            const agentContainer = document.getElementById("agentsGrid");
+            const addAgent = (list, roleClass) => {
+                list.forEach(a => {
+                    agentContainer.innerHTML += `
+                        <label class="mini-label agent-label ${roleClass}">
+                            <input type="checkbox" class="agent-check" value="${a}" data-role="${roleClass}" checked> ${a}
+                        </label>`;
+                });
+            };
+            addAgent(agentsData.duelists, "role-duelist");
+            addAgent(agentsData.controllers, "role-controller");
+            addAgent(agentsData.initiators, "role-initiator");
+            addAgent(agentsData.sentinels, "role-sentinel");
+
+            drawWheel([]);
+        }
+
+        function addCheck(container, value, cls, checked, labelText) {
+            container.innerHTML += `
+                <label class="mini-label">
+                    <input type="checkbox" class="${cls}" value="${value}" ${checked ? 'checked' : ''}> ${labelText}
+                </label>`;
+        }
+
+        // --- ЛОГИКА UI ---
+        function toggleSettings() {
+            const panel = document.getElementById("settingsPanel");
+            const arrow = document.getElementById("settingsArrow");
+            if (panel.style.display === "block") {
+                panel.style.display = "none";
+                arrow.innerText = "▼";
+            } else {
+                panel.style.display = "block";
+                arrow.innerText = "▲";
+                // Скролл вниз к настройкам
+                panel.scrollIntoView({behavior: "smooth"});
+            }
+        }
+
+        function toggleAll(type) {
+            const cls = type === 'map' ? '.map-check' : '.agent-check';
+            const boxes = document.querySelectorAll(cls);
+            const newState = !boxes[0].checked;
+            boxes.forEach(b => b.checked = newState);
+        }
+
         function toggleMode() {
-            // При переключении режима очищаем "гостей", чтобы не путаться
-            customPlayers = []; 
+            customPlayers = [];
             renderRoster();
             updateUI();
         }
@@ -251,164 +277,153 @@
             const rosterDiv = document.getElementById("rosterArea");
             rosterDiv.innerHTML = '';
 
-            // 1. Если режим Психушки - рисуем друзей
             if (isPsycho) {
-                friends.forEach((name, index) => {
-                    const id = `friend_${index}`;
+                friends.forEach((name, i) => {
                     rosterDiv.innerHTML += `
-                        <input type="checkbox" class="player-checkbox" id="${id}" value="${name}" onchange="updateUI()">
-                        <label class="player-label" for="${id}">${name}</label>
-                    `;
+                        <input type="checkbox" class="player-checkbox" id="f_${i}" value="${name}" onchange="updateUI()">
+                        <label class="player-label" for="f_${i}">${name}</label>`;
                 });
             }
-
-            // 2. Рисуем добавленных вручную (они всегда есть, если массив не пуст)
-            customPlayers.forEach((name, index) => {
-                const id = `custom_${index}`;
-                // Кастомные игроки сразу выбраны (checked)
+            customPlayers.forEach((name, i) => {
                 rosterDiv.innerHTML += `
-                    <input type="checkbox" class="player-checkbox" id="${id}" value="${name}" checked onchange="updateUI()">
-                    <label class="player-label" for="${id}">${name}</label>
-                `;
+                    <input type="checkbox" class="player-checkbox" id="c_${i}" value="${name}" checked onchange="updateUI()">
+                    <label class="player-label" for="c_${i}">${name}</label>`;
             });
 
-            // 3. Рисуем кнопку ПЛЮСИК
             const plusBtn = document.createElement('div');
             plusBtn.className = 'add-btn';
             plusBtn.innerHTML = '+';
-            plusBtn.onclick = addCustomPlayer;
+            plusBtn.onclick = () => {
+                const name = prompt("Имя игрока:");
+                if (name && name.trim()) {
+                    customPlayers.push(name.trim());
+                    renderRoster();
+                    updateUI();
+                }
+            };
             rosterDiv.appendChild(plusBtn);
         }
 
-        function addCustomPlayer() {
-            const name = prompt("Введите имя игрока:");
-            if (name && name.trim() !== "") {
-                customPlayers.push(name.trim());
-                renderRoster(); // Перерисовываем список
-                updateUI();     // Обновляем колесо
-            }
-        }
-
-        // --- ИНИЦИАЛИЗАЦИЯ КАРТ И СТАРТ ---
-        function init() {
-            // Карты
-            const mapsDiv = document.getElementById("mapsArea");
-            allMaps.forEach((map) => {
-                mapsDiv.innerHTML += `
-                    <label class="map-label">
-                        <input type="checkbox" class="map-checkbox" value="${map}" checked> ${map}
-                    </label>
-                `;
-            });
-
-            renderRoster(); // Первый запуск
-            drawWheel([]);
-        }
-
-        // --- СТАНДАРТНАЯ ЛОГИКА (БЕЗ ИЗМЕНЕНИЙ) ---
-        function getSelectedPlayers() {
-            return Array.from(document.querySelectorAll('.player-checkbox:checked')).map(cb => cb.value);
-        }
-
-        function getSelectedMaps() {
-            return Array.from(document.querySelectorAll('.map-checkbox:checked')).map(cb => cb.value);
-        }
-
         function updateUI() {
-            const selected = getSelectedPlayers();
+            const selected = Array.from(document.querySelectorAll('.player-checkbox:checked')).map(c => c.value);
             const count = selected.length;
-            let modeText = "(Недостаточно)";
-            if (count >= 2) modeText = `(${Math.floor(count/2)} vs ${Math.ceil(count/2)})`;
-            document.getElementById("playerCounter").innerText = `Выбрано: ${count} ${modeText}`;
+            let modeText = count >= 2 ? `(${Math.floor(count/2)} vs ${Math.ceil(count/2)})` : "(Недостаточно)";
+            document.getElementById("playerCounter").innerText = `${count} Players ${modeText}`;
             drawWheel(selected);
         }
 
-        function toggleMaps() {
-            const checkboxes = document.querySelectorAll('.map-checkbox');
-            const newState = !checkboxes[0].checked;
-            checkboxes.forEach(cb => cb.checked = newState);
-        }
-
-        function drawWheel(names) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // --- SMART AGENT PICKER ---
+        function assignAgents(teamSize) {
+            // Собираем доступных агентов
+            const getAvail = (cls) => Array.from(document.querySelectorAll(`.agent-check.${cls}:checked`)).map(c => c.value);
             
-            if (names.length === 0) {
-                ctx.beginPath();
-                ctx.arc(250, 250, 250, 0, 2 * Math.PI);
-                ctx.fillStyle = "#1f2731";
-                ctx.fill();
-                ctx.fillStyle = "#fff";
-                ctx.textAlign = "center";
-                ctx.font = "30px Arial";
-                ctx.fillText("ВЫБЕРИТЕ ЛЮДЕЙ", 250, 250);
-                return;
+            let poolDuelists = getAvail('role-duelist');
+            let poolControllers = getAvail('role-controller');
+            let poolOthers = [...getAvail('role-sentinel'), ...getAvail('role-initiator')];
+            
+            // Если включен рандомайзер
+            if (!document.getElementById("enableAgents").checked) return Array(teamSize).fill(null);
+
+            let teamAgents = [];
+
+            // ШАГ 1: Обязательно 1 смокер
+            if (poolControllers.length > 0) {
+                const pick = poolControllers.splice(Math.floor(Math.random() * poolControllers.length), 1)[0];
+                teamAgents.push(pick);
             }
 
-            const arc = (2 * Math.PI) / names.length;
-            const radius = 250;
+            // ШАГ 2: Обязательно 1 дуэлянт (если место есть)
+            if (teamAgents.length < teamSize && poolDuelists.length > 0) {
+                const pick = poolDuelists.splice(Math.floor(Math.random() * poolDuelists.length), 1)[0];
+                teamAgents.push(pick);
+            }
 
-            names.forEach((name, i) => {
-                const angle = i * arc;
-                ctx.beginPath();
-                ctx.fillStyle = colors[i % colors.length];
-                ctx.moveTo(radius, radius);
-                ctx.arc(radius, radius, radius, angle, angle + arc);
-                ctx.fill();
-                ctx.stroke();
+            // ШАГ 3: Заполняем остальное рандомом
+            // Сливаем остатки в один пул
+            let fullPool = [...poolDuelists, ...poolControllers, ...poolOthers];
+            
+            while (teamAgents.length < teamSize) {
+                if (fullPool.length === 0) { teamAgents.push("???"); continue; } // Кончились агенты
+                const r = Math.floor(Math.random() * fullPool.length);
+                teamAgents.push(fullPool[r]);
+                fullPool.splice(r, 1);
+            }
 
-                ctx.save();
-                ctx.translate(radius, radius);
-                ctx.rotate(angle + arc / 2);
-                ctx.textAlign = "right";
-                ctx.fillStyle = "#fff";
-                ctx.font = "bold 24px Arial";
-                ctx.fillText(name, radius - 20, 10);
-                ctx.restore();
+            // ШАГ 4: Перемешиваем роли внутри команды, чтобы смокер не всегда был у капитана
+            return shuffle(teamAgents);
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // --- CORE LOGIC ---
+        function drawWheel(names) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (names.length === 0) {
+                ctx.beginPath(); ctx.arc(250, 250, 250, 0, 2*Math.PI); ctx.fillStyle="#1f2731"; ctx.fill();
+                return;
+            }
+            const arc = (2*Math.PI)/names.length;
+            names.forEach((n, i) => {
+                ctx.beginPath(); ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(250, 250); ctx.arc(250, 250, 250, i*arc, (i+1)*arc); ctx.fill(); ctx.stroke();
+                ctx.save(); ctx.translate(250, 250); ctx.rotate(i*arc + arc/2);
+                ctx.textAlign = "right"; ctx.fillStyle = "#fff"; ctx.font = "bold 20px Arial";
+                ctx.fillText(n, 230, 10); ctx.restore();
             });
         }
 
         function spinWheel() {
-            const players = getSelectedPlayers();
-            const activeMaps = getSelectedMaps();
+            const players = Array.from(document.querySelectorAll('.player-checkbox:checked')).map(c => c.value);
+            const maps = Array.from(document.querySelectorAll('.map-check:checked')).map(c => c.value);
 
-            if (players.length < 2) {
-                alert("Нужно хотя бы 2 человека!");
-                return;
-            }
-            if (activeMaps.length === 0) {
-                alert("Выберите хотя бы одну карту!");
-                return;
-            }
+            if (players.length < 2) { alert("Минимум 2 игрока!"); return; }
+            if (maps.length === 0) { alert("Выберите карты!"); return; }
 
             document.getElementById("result").style.display = "none";
-
-            const randomDegree = Math.floor(3000 + Math.random() * 360); 
-            currentRotation += randomDegree;
+            currentRotation += Math.floor(3000 + Math.random() * 360);
             canvas.style.transform = `rotate(-${currentRotation}deg)`;
 
-            setTimeout(() => {
-                showResults(players, activeMaps);
-            }, 4000);
+            setTimeout(() => { showResults(players, maps); }, 4000);
         }
 
-        function showResults(players, activeMaps) {
-            for (let i = players.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [players[i], players[j]] = [players[j], players[i]];
-            }
+        function showResults(players, maps) {
+            // 1. Выбор карты и режима
+            const map = maps[Math.floor(Math.random() * maps.length)];
+            const mode = document.getElementById("gameMode").value;
 
+            // 2. Делим команды
+            shuffle(players);
             const mid = Math.ceil(players.length / 2);
-            const teamA = players.slice(0, mid);
-            const teamB = players.slice(mid);
-            const randomMap = activeMaps[Math.floor(Math.random() * activeMaps.length)];
+            const teamA_names = players.slice(0, mid);
+            const teamB_names = players.slice(mid);
 
-            document.getElementById("resMap").innerText = randomMap.toUpperCase();
-            document.getElementById("resTeamA").innerHTML = `<b>👑 ${teamA[0]}</b><br>` + teamA.slice(1).join("<br>");
-            document.getElementById("resTeamB").innerHTML = `<b>👑 ${teamB[0]}</b><br>` + teamB.slice(1).join("<br>");
+            // 3. Раздаем агентов
+            const teamA_agents = assignAgents(teamA_names.length);
+            const teamB_agents = assignAgents(teamB_names.length);
 
-            const resDiv = document.getElementById("result");
-            resDiv.style.display = "block";
-            resDiv.scrollIntoView({behavior: "smooth", block: "center"});
+            // 4. Формируем HTML
+            const buildRow = (name, agent, isCap) => `
+                <div class="player-row">
+                    ${isCap ? '<span class="crown">👑</span>' : ''}
+                    <b>${name}</b>
+                    ${agent ? `<span class="agent-name">(${agent})</span>` : ''}
+                </div>`;
+
+            document.getElementById("resMode").innerText = mode;
+            document.getElementById("resMap").innerText = map.toUpperCase();
+            
+            document.getElementById("resTeamA").innerHTML = teamA_names.map((n, i) => buildRow(n, teamA_agents[i], i===0)).join('');
+            document.getElementById("resTeamB").innerHTML = teamB_names.map((n, i) => buildRow(n, teamB_agents[i], i===0)).join('');
+
+            const resBox = document.getElementById("result");
+            resBox.style.display = "block";
+            resBox.scrollIntoView({behavior: "smooth"});
         }
 
         init();
