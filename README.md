@@ -35,7 +35,7 @@
 
 | Главное Меню | Результаты Матча |
 |:---:|:---:|
-| <img src="https://via.placeholder.com/300x600?text=Menu+Screen" width="300"> | <img src="https://via.placeholder.com/300x600?text=Result+Screen" width="300"> |
+| <img src="image.png" width="300"> | <img src="image_2.png" width="300"> |
 
 *(Замените ссылки выше на реальные скриншоты из папки /img)*
 
