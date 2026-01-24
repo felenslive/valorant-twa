@@ -35,7 +35,7 @@
 
 | Главное Меню | Результаты Матча |
 |:---:|:---:|
-| <img src="image.png" width="300"> | <img src="image_2.png" width="300"> |
+| <img src="img/image.png" width="300"> | <img src="img/image_2.png" width="300"> |
 
 *(Замените ссылки выше на реальные скриншоты из папки /img)*
 
