@@ -37,7 +37,6 @@
 |:---:|:---:|
 | <img src="img/image_2.png" width="300"> | <img src="img/image.png" width="300"> |
 
-*(Замените ссылки выше на реальные скриншоты из папки /img)*
 
 ---
 
@@ -67,7 +66,7 @@
 
 ## 👨‍💻 Автор
 
-Developed by **[FelensLive]** as a CS Student Project.  
+Developed by **MoonShineForever**.  
 *Ideas and logic inspired by casual Valorant chaos.*
 
 ---
