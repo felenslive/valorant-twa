@@ -147,7 +147,7 @@
         /* Стили для агентов в списке */
         .agent-label { 
             font-size: 13px; padding: 8px 5px; background: rgba(255,255,255,0.05); 
-            border-left: 4px solid transparent; /* Базовый цвет */
+            border-left: 4px solid transparent; 
             display: flex; align-items: center; 
         }
         /* Цветовое кодирование ролей */
@@ -262,7 +262,7 @@
     </div>
 
     <script>
-        const friends = ["Влад", "Никита", "Лёша", "Василиса", "Вова", "Богдан", "Артем Донбасс", "Артём рыбак", "Варя"];
+        const friends = ["Влад", "Никита", "Диана", "Василиса", "Вова", "Богдан", "Артем Донбасс", "Артём рыбак", "Ivy"];
         let customPlayers = [];
 
         let agentAssets = {}; 
@@ -273,10 +273,11 @@
             tdm: ["District", "Kasbah", "Piazza", "Drift", "Glitch"]
         };
 
+        // ИСПРАВЛЕННАЯ БАЗА ДАННЫХ АГЕНТОВ
         const agentsData = {
-            duelists: ["Jett", "Reyna", "Raze", "Phoenix", "Yoru", "Neon", "ISO", "Clove", "Waylay", "Tejo"],
-            controllers: ["Brimstone", "Omen", "Viper", "Astra", "Harbor"],
-            initiators: ["Sova", "Breach", "Skye", "KAY/O", "Fade", "Gekko"],
+            duelists: ["Jett", "Reyna", "Raze", "Phoenix", "Yoru", "Neon", "Iso", "Waylay"], // Iso с маленькой, убрали Clove/Tejo
+            controllers: ["Brimstone", "Omen", "Viper", "Astra", "Harbor", "Clove"], // Clove теперь здесь
+            initiators: ["Sova", "Breach", "Skye", "KAY/O", "Fade", "Gekko", "Tejo"], // Tejo теперь здесь
             sentinels: ["Sage", "Cypher", "Killjoy", "Chamber", "Deadlock", "Vyse", "Veto"]
         };
 
@@ -296,12 +297,11 @@
                 dataMaps.data.forEach(map => { mapAssets[map.displayName] = map.splash; });
                 
                 document.getElementById("playerCounter").innerText = "ASSETS READY. WAITING FOR PLAYERS...";
-                // Перерисовываем список агентов, чтобы появились иконки
                 renderAgentsList();
             } catch (e) {
                 console.error("Failed to load assets", e);
                 document.getElementById("playerCounter").innerText = "OFFLINE MODE. TEXT ONLY.";
-                renderAgentsList(); // Рисуем даже без иконок
+                renderAgentsList();
             }
         }
 
@@ -346,13 +346,12 @@
         }
 
         function init() {
-            loadAssets(); // Загрузка иконок
+            loadAssets();
             renderRoster();
             updateMapPool();
             drawWheel([]);
         }
 
-        // Функция рендера списка агентов (вынесена отдельно)
         function renderAgentsList() {
             const agentContainer = document.getElementById("agentsGrid");
             agentContainer.innerHTML = ''; 
@@ -360,7 +359,6 @@
             const addAgent = (list, roleClass) => {
                 let htmlBuffer = ''; 
                 list.forEach(a => {
-                    // Берем иконку из загруженных ассетов или заглушку
                     let iconUrl = agentAssets[a] || "https://media.valorant-api.com/agents/roles/5fc02f99-4091-4486-a531-98459a3e92e3/displayicon.png";
                     
                     htmlBuffer += `
@@ -451,7 +449,6 @@
         }
 
         function assignAgents(teamSize) {
-            // Если главный свитч выключен - не даем агентов
             if (!document.getElementById("enableAgents").checked) return Array(teamSize).fill(null);
 
             const getAvail = (cls) => Array.from(document.querySelectorAll(`.agent-check.${cls}:checked`)).map(c => c.value);
@@ -461,24 +458,18 @@
             let fullPool = [...poolDuelists, ...poolControllers, ...poolOthers];
 
             let teamAgents = [];
-
-            // Проверяем новый переключатель "Smart Pick"
             const useSmartPick = document.getElementById("smartPickToggle").checked;
 
             if (useSmartPick) {
-                // --- ЛОГИКА С ГАРАНТОМ РОЛЕЙ ---
                 if (poolControllers.length > 0) {
                     teamAgents.push(poolControllers.splice(Math.floor(Math.random() * poolControllers.length), 1)[0]);
                 }
                 if (teamAgents.length < teamSize && poolDuelists.length > 0) {
                     teamAgents.push(poolDuelists.splice(Math.floor(Math.random() * poolDuelists.length), 1)[0]);
                 }
-                // Обновляем общий пул после изъятия
                 fullPool = [...poolDuelists, ...poolControllers, ...poolOthers];
             }
 
-            // --- ОБЩАЯ ЛОГИКА (Добиваем остаток рандомом) ---
-            // Если Smart Pick выключен, мы сразу переходим сюда и берем из полного пула
             while (teamAgents.length < teamSize) {
                 if (fullPool.length === 0) { teamAgents.push("???"); continue; }
                 const r = Math.floor(Math.random() * fullPool.length);
