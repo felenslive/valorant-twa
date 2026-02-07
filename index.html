@@ -12,6 +12,7 @@
             --text: #ece8e1;
             --red: #ff4655;
             --red-dim: #bd3944;
+            --purple: #8e44ad; /* Цвет для страт-рулетки */
             --dark-panel: rgba(15, 25, 35, 0.95);
             --border: #535c68;
             /* Цвета ролей */
@@ -144,19 +145,16 @@
         .mini-label:hover { color: #fff; }
         .mini-label input { margin-right: 8px; accent-color: var(--red); transform: scale(1.2); }
 
-        /* Стили для агентов в списке */
         .agent-label { 
             font-size: 13px; padding: 8px 5px; background: rgba(255,255,255,0.05); 
             border-left: 4px solid transparent; 
             display: flex; align-items: center; 
         }
-        /* Цветовое кодирование ролей */
         .role-duelist { border-left-color: var(--duelist); }
         .role-controller { border-left-color: var(--controller); }
         .role-sentinel { border-left-color: var(--sentinel); }
         .role-initiator { border-left-color: var(--initiator); }
 
-        /* Маленькая иконка в списке */
         .agent-icon-small {
             width: 20px; height: 20px; border-radius: 50%; margin-right: 8px;
             background: #333; object-fit: cover;
@@ -180,13 +178,39 @@
         
         .player-row { margin-top: 10px; font-size: 18px; display: flex; align-items: center; }
         
-        /* Большая иконка в результатах */
         .agent-icon {
             width: 24px; height: 24px; border-radius: 50%; border: 1px solid #fff; margin: 0 8px;
             background: #333; object-fit: cover;
         }
         .agent-text { font-size: 14px; color: #8b9bb4; font-style: normal; }
         .crown { color: #f1c40f; margin-right: 8px; font-size: 14px; }
+
+        /* --- STRAT ROULETTE STYLES --- */
+        .strat-container {
+            margin-top: 20px;
+            border-top: 1px dashed #555;
+            padding-top: 15px;
+            text-align: center;
+        }
+        .btn-strat {
+            background: var(--purple); /* Фиолетовый */
+            color: white; border: none;
+            padding: 10px 0; width: 100%;
+            font-size: 16px; font-weight: bold; font-family: 'Oswald', sans-serif; letter-spacing: 2px;
+            cursor: pointer; text-transform: uppercase;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            transition: 0.2s;
+        }
+        .btn-strat:active { transform: scale(0.98); opacity: 0.8; }
+        
+        .strat-output {
+            margin-top: 10px;
+            font-size: 18px;
+            color: #d1b2ff; /* Светло-фиолетовый текст */
+            min-height: 24px;
+            text-shadow: 0 0 5px rgba(142, 68, 173, 0.5);
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -259,6 +283,11 @@
 
         <div class="team-header" id="headerTeamB">DEFENDERS</div>
         <div id="resTeamB"></div>
+
+        <div class="strat-container">
+            <button class="btn-strat" onclick="rollStrat()">🎲 ROLL STRAT</button>
+            <div class="strat-output" id="stratOutput"></div>
+        </div>
     </div>
 
     <script>
@@ -273,13 +302,36 @@
             tdm: ["District", "Kasbah", "Piazza", "Drift", "Glitch"]
         };
 
-        // ИСПРАВЛЕННАЯ БАЗА ДАННЫХ АГЕНТОВ
         const agentsData = {
-            duelists: ["Jett", "Reyna", "Raze", "Phoenix", "Yoru", "Neon", "Iso", "Waylay"], // Iso с маленькой, убрали Clove/Tejo
-            controllers: ["Brimstone", "Omen", "Viper", "Astra", "Harbor", "Clove"], // Clove теперь здесь
-            initiators: ["Sova", "Breach", "Skye", "KAY/O", "Fade", "Gekko", "Tejo"], // Tejo теперь здесь
+            duelists: ["Jett", "Reyna", "Raze", "Phoenix", "Yoru", "Neon", "Iso", "Waylay"], 
+            controllers: ["Brimstone", "Omen", "Viper", "Astra", "Harbor", "Clove"], 
+            initiators: ["Sova", "Breach", "Skye", "KAY/O", "Fade", "Gekko", "Tejo"], 
             sentinels: ["Sage", "Cypher", "Killjoy", "Chamber", "Deadlock", "Vyse", "Veto"]
         };
+        
+        // СПИСОК ЧЕЛЛЕНДЖЕЙ
+        const stratsList = [
+            "ONLY SHORTY (В упор или никак)",
+            "NO ABILITIES (Чистая стрельба)",
+            "SHERIFF ONLY (One Tap Challenge)",
+            "MAX SENSITIVITY (Ставь DPI на максимум)",
+            "NO CROUCHING (Отклеить Ctrl)",
+            "RUN & GUN ONLY (Не останавливаться)",
+            "GLADIATOR (Только ножи на миду)",
+            "PROTECT THE VIP (Один с оружием, остальные живой щит)",
+            "REVERSE MOUSE (Инверсия мыши)",
+            "NO HUD (Alt+Z / Выключить интерфейс)",
+            "ONE MAG (Нельзя перезаряжаться)",
+            "JUDGE JURY EXECUTIONER (Только Judge)",
+            "NO SCOPE (Только от бедра, даже на снайпах)",
+            "FOLLOW THE LEADER (Все ходят паровозиком за одним)",
+            "SILENT LIBRARY (Ни звука в дискорде)",
+            "CRAB WALK (Всю игру на Ctrl)",
+            "GLASS CANNON (Без покупки брони)",
+            "ODIN SPAM (5 Одинов, простреливаем всё)",
+            "MARSHAL ARTIST (Marshal only)",
+            "GUN ROULETTE (Каждый раунд - рандомное оружие)"
+        ];
 
         const canvas = document.getElementById("wheelCanvas");
         const ctx = canvas.getContext("2d");
@@ -343,6 +395,31 @@
                 if (count < 25) { setTimeout(loop, time); }
             }
             loop();
+        }
+        
+        // --- STRAT ROULETTE LOGIC ---
+        function rollStrat() {
+            const output = document.getElementById("stratOutput");
+            const finalStrat = stratsList[Math.floor(Math.random() * stratsList.length)];
+            
+            // Эффект "хакера" (расшифровка текста)
+            let iterations = 0;
+            const interval = setInterval(() => {
+                output.innerText = finalStrat.split("")
+                    .map((letter, index) => {
+                        if (index < iterations) {
+                            return finalStrat[index];
+                        }
+                        return "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[Math.floor(Math.random() * 26)];
+                    })
+                    .join("");
+                
+                if (iterations >= finalStrat.length) { 
+                    clearInterval(interval);
+                }
+                
+                iterations += 1/2; // Скорость расшифровки
+            }, 30);
         }
 
         function init() {
@@ -516,6 +593,7 @@
             if (maps.length === 0) { alert("SELECT MAPS!"); return; }
 
             document.getElementById("result").style.display = "none";
+            document.getElementById("stratOutput").innerText = ""; // Очищаем старый страт
             currentRotation += Math.floor(3000 + Math.random() * 360);
             canvas.style.transform = `rotate(-${currentRotation}deg)`;
             simulateSpinSound();
